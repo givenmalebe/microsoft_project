@@ -18,7 +18,7 @@ from urllib.parse import quote
 import random
 import time
 import altair as alt
-import plotly.express as px
+
 from io import BytesIO
 import base64
 import zipfile

@@ -9,7 +9,6 @@ from typing import List, Dict, Type
 import pandas as pd
 from bs4 import BeautifulSoup
 from pydantic import BaseModel, Field, create_model
-import html2text
 import tiktoken
 import streamlit as st
 
@@ -109,6 +108,19 @@ def clean_html(html_content):
     return str(soup)
 
 
+# Comment out the problematic import
+# import html2text
+
+# Add a simple replacement function
+def html_to_plain_text(html):
+    """Simple function to extract text from HTML without html2text."""
+    from bs4 import BeautifulSoup
+    soup = BeautifulSoup(html, 'html.parser')
+    return soup.get_text()
+
+# Then replace any usage of html2text with this function
+
+
 def html_to_markdown_with_readability(html_content):
 
     
@@ -199,112 +211,40 @@ def generate_system_message(listing_model: BaseModel) -> str:
 
 
 
-def format_data(data, DynamicListingsContainer, DynamicListingModel, selected_model):
-    token_counts = {}
-    
-    if selected_model in ["gpt-4o-mini", "gpt-4o-2024-08-06"]:
+def format_data(markdown_content, container_model, listing_model, selected_model):
+    try:
         # Use OpenAI API
         client = OpenAI(api_key=get_api_key('OPENAI_API_KEY'))
-        completion = client.beta.chat.completions.parse(
-            model=selected_model,
-            messages=[
-                {"role": "system", "content": SYSTEM_MESSAGE},
-                {"role": "user", "content": USER_MESSAGE + data},
-            ],
-            response_format=DynamicListingsContainer
-        )
-        # Calculate tokens using tiktoken
-        encoder = tiktoken.encoding_for_model(selected_model)
-        input_token_count = len(encoder.encode(USER_MESSAGE + data))
-        output_token_count = len(encoder.encode(json.dumps(completion.choices[0].message.parsed.dict())))
-        token_counts = {
-            "input_tokens": input_token_count,
-            "output_tokens": output_token_count
-        }
-        return completion.choices[0].message.parsed, token_counts
-
-    elif selected_model == "gemini-1.5-flash":
-        # Use Google Gemini API
-        genai.configure(api_key=get_api_key("GOOGLE_API_KEY"))
-        model = genai.GenerativeModel('gemini-1.5-flash',
-                generation_config={
-                    "response_mime_type": "application/json",
-                    "response_schema": DynamicListingsContainer
-                })
-        prompt = SYSTEM_MESSAGE + "\n" + USER_MESSAGE + data
-        # Count input tokens using Gemini's method
-        input_tokens = model.count_tokens(prompt)
-        completion = model.generate_content(prompt)
-        # Extract token counts from usage_metadata
-        usage_metadata = completion.usage_metadata
-        token_counts = {
-            "input_tokens": usage_metadata.prompt_token_count,
-            "output_tokens": usage_metadata.candidates_token_count
-        }
-        return completion.text, token_counts
-    
-    elif selected_model == "Llama3.1 8B":
-
-        # Dynamically generate the system message based on the schema
-        sys_message = generate_system_message(DynamicListingModel)
-        # print(SYSTEM_MESSAGE)
-        # Point to the local server
-        client = OpenAI(base_url="http://localhost:1234/v1", api_key="lm-studio")
-
+        
+        # Generate system message for the model
+        system_message = generate_system_message(listing_model)
+        
         completion = client.chat.completions.create(
-            model=LLAMA_MODEL_FULLNAME, #change this if needed (use a better model)
+            model="gpt-4o-mini",
             messages=[
-                {"role": "system", "content": sys_message},
-                {"role": "user", "content": USER_MESSAGE + data}
+                {"role": "system", "content": system_message},
+                {"role": "user", "content": USER_MESSAGE + markdown_content},
             ],
-            temperature=0.7,
+            response_format={"type": "json_object"}
+        )
+        
+        formatted_data = completion.choices[0].message.content
+        
+        # Get token counts from the completion object
+        token_counts = {
+            "input_tokens": completion.usage.prompt_tokens,
+            "output_tokens": completion.usage.completion_tokens
+        }
+        
+        # Parse the formatted data if it's a string
+        if isinstance(formatted_data, str):
+            formatted_data = json.loads(formatted_data)
             
-        )
-
-        # Extract the content from the response
-        response_content = completion.choices[0].message.content
-        print(response_content)
-        # Convert the content from JSON string to a Python dictionary
-        parsed_response = json.loads(response_content)
+        return formatted_data, token_counts
         
-        # Extract token usage
-        token_counts = {
-            "input_tokens": completion.usage.prompt_tokens,
-            "output_tokens": completion.usage.completion_tokens
-        }
-
-        return parsed_response, token_counts
-    elif selected_model== "Groq Llama3.1 70b":
-        
-        # Dynamically generate the system message based on the schema
-        sys_message = generate_system_message(DynamicListingModel)
-        # print(SYSTEM_MESSAGE)
-        # Point to the local server
-        client = Groq(api_key=get_api_key("GROQ_API_KEY"),)
-
-        completion = client.chat.completions.create(
-        messages=[
-            {"role": "system","content": sys_message},
-            {"role": "user","content": USER_MESSAGE + data}
-        ],
-        model=GROQ_LLAMA_MODEL_FULLNAME,
-    )
-
-        # Extract the content from the response
-        response_content = completion.choices[0].message.content
-        
-        # Convert the content from JSON string to a Python dictionary
-        parsed_response = json.loads(response_content)
-        
-        # completion.usage
-        token_counts = {
-            "input_tokens": completion.usage.prompt_tokens,
-            "output_tokens": completion.usage.completion_tokens
-        }
-
-        return parsed_response, token_counts
-    else:
-        raise ValueError(f"Unsupported model: {selected_model}")
+    except Exception as e:
+        st.error(f"Error in format_data: {str(e)}")
+        return {}, {"input_tokens": 0, "output_tokens": 0}
 
 
 
@@ -353,15 +293,21 @@ def save_formatted_data(formatted_data, output_folder: str, json_file_name: str,
         return None
 
 def calculate_price(token_counts, model):
-    input_token_count = token_counts.get("input_tokens", 0)
-    output_token_count = token_counts.get("output_tokens", 0)
+    # Fixed pricing for gpt-4o-mini
+    PRICE_PER_1K_TOKENS = {
+        "input": 0.01,   # $0.01 per 1K input tokens
+        "output": 0.03   # $0.03 per 1K output tokens
+    }
     
-    # Calculate the costs
-    input_cost = input_token_count * PRICING[model]["input"]
-    output_cost = output_token_count * PRICING[model]["output"]
+    input_tokens = token_counts["input_tokens"]
+    output_tokens = token_counts["output_tokens"]
+    
+    input_cost = (input_tokens / 1000) * PRICE_PER_1K_TOKENS["input"]
+    output_cost = (output_tokens / 1000) * PRICE_PER_1K_TOKENS["output"]
+    
     total_cost = input_cost + output_cost
     
-    return input_token_count, output_token_count, total_cost
+    return input_tokens, output_tokens, total_cost
 
 
 def generate_unique_folder_name(url):

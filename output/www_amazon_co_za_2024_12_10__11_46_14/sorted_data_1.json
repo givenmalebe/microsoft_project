@@ -1,0 +1,162 @@
+{
+    "bestSellers": [
+        {
+            "rank": 1,
+            "title": "Samsung Galaxy Fit3 Smart Watch, Grey",
+            "image": "https://images-eu.ssl-images-amazon.com/images/I/41UlgWY4b0L._AC_UL600_SR600,400_.jpg",
+            "rating": 4.6,
+            "reviews": 8,
+            "price": "R 999.00",
+            "link": "/Samsung-Galaxy-Fit3-Smart-Watch/dp/B0D17DP3YC/ref=zg_bs_g_28034770031_d_sccl_1/261-3268416-0351442?psc=1"
+        },
+        {
+            "rank": 2,
+            "title": "Apple AirPods 4 Wireless Earbuds, Bluetooth Headphones, Personalised Spatial Audio, Sweat and Water Resistant, USB C Charging",
+            "image": "https://images-eu.ssl-images-amazon.com/images/I/61DvMw16ITL._AC_UL600_SR600,400_.jpg",
+            "rating": 4.1,
+            "reviews": 111,
+            "price": "R 2,499.00",
+            "link": "/Apple-Bluetooth-Headphones-Personalised-Effortless/dp/B0DGHYPFGK/ref=zg_bs_g_28034770031_d_sccl_2/261-3268416-0351442?psc=1"
+        },
+        {
+            "rank": 3,
+            "title": "Garmin Vivoactive 5 Music Edition Fitness and Health Smartwatch, Black/Slate",
+            "image": "https://images-eu.ssl-images-amazon.com/images/I/61A4yOWzGBL._AC_UL600_SR600,400_.jpg",
+            "rating": 4.3,
+            "reviews": 1679,
+            "price": "R 4,999.00",
+            "link": "/Garmin-Vivoactive-Fitness-Health-Smartwatch/dp/B0CG6NR413/ref=zg_bs_g_28034770031_d_sccl_3/261-3268416-0351442?psc=1"
+        },
+        {
+            "rank": 4,
+            "title": "Jabra Talk 25 SE Mono Wireless Single Ear Bluetooth Headset with Built-In Microphone, Black",
+            "image": "https://images-eu.ssl-images-amazon.com/images/I/51f3ir8XXoL._AC_UL600_SR600,400_.jpg",
+            "rating": 4.0,
+            "reviews": 1629,
+            "price": "R 599.96",
+            "link": "/Jabra-Wireless-Bluetooth-Headset-Microphone/dp/B09NQ71KM9/ref=zg_bs_g_28034770031_d_sccl_4/261-3268416-0351442?psc=1"
+        },
+        {
+            "rank": 5,
+            "title": "Jabra Talk 15 SE Mono Wireless Single Ear Bluetooth Headset with Built-In Microphone, Black",
+            "image": "https://images-eu.ssl-images-amazon.com/images/I/61oknXDMhKL._AC_UL600_SR600,400_.jpg",
+            "rating": 3.9,
+            "reviews": 671,
+            "link": "/Jabra-Wireless-Bluetooth-Headset-Microphone/dp/B09NQ71ZKX/ref=zg_bs_g_28034770031_d_sccl_5/261-3268416-0351442?psc=1"
+        },
+        {
+            "rank": 6,
+            "title": "Compatible with Apple Watch Series 10 (2024) 42mm Case with Screen Protector, Hard PC Ultra Slim Shockproof All-Around Protective Case for iWatch (Black)",
+            "image": "https://images-eu.ssl-images-amazon.com/images/I/71BZd-+E1DL._AC_UL600_SR600,400_.jpg",
+            "price": "R 169.00",
+            "link": "/Compatible-Protector-Shockproof-All-Around-Protective/dp/B0DHTD2VXJ/ref=zg_bs_g_28034770031_d_sccl_6/261-3268416-0351442?psc=1"
+        },
+        {
+            "rank": 7,
+            "title": "Retro Generic Classic Design Steel Digital Wristwatch",
+            "image": "https://images-eu.ssl-images-amazon.com/images/I/51TuLVpuApL._AC_UL600_SR600,400_.jpg",
+            "price": "R 299.00",
+            "link": "/Generic-Classic-Design-Digital-Wristwatch/dp/B0D8QLP3MX/ref=zg_bs_g_28034770031_d_sccl_7/261-3268416-0351442?psc=1"
+        },
+        {
+            "rank": 8,
+            "title": "SE-017 Kids SOS Smart Watch with Camera \u2013 5th Generation LBS Tracker (Blue)",
+            "image": "https://images-eu.ssl-images-amazon.com/images/I/41j7FKXkiwL._AC_UL600_SR600,400_.jpg",
+            "price": "R 450.00",
+            "link": "/SE-017-Kids-Smart-Watch-Camera/dp/B0DNFNYKHT/ref=zg_bs_g_28034770031_d_sccl_8/261-3268416-0351442?psc=1"
+        },
+        {
+            "rank": 9,
+            "title": "42mm/44mm Magnetic Milanese Strap for Apple Watch (Silver)",
+            "image": "https://images-eu.ssl-images-amazon.com/images/I/71C0VJuBylL._AC_UL600_SR600,400_.jpg",
+            "price": "R 89.99",
+            "link": "/Magnetic-Milanese-Strap-Apple-Silver/dp/B0D47GKCP7/ref=zg_bs_g_28034770031_d_sccl_9/261-3268416-0351442?psc=1"
+        },
+        {
+            "rank": 10,
+            "title": "for Huawei Watch Fit 3 (2024) Tempered Glass PC Cover 2 In 1 Watch Screen Protector Cover Full Coverage Bumper Case (Transparent)",
+            "image": "https://images-eu.ssl-images-amazon.com/images/I/71X3qpibNCL._AC_UL600_SR600,400_.jpg",
+            "rating": 1.0,
+            "reviews": 1,
+            "price": "R 99.00",
+            "link": "/Huawei-Tempered-Protector-Coverage-Transparent/dp/B0D9S3CGHZ/ref=zg_bs_g_28034770031_d_sccl_10/261-3268416-0351442?psc=1"
+        },
+        {
+            "rank": 11,
+            "title": "Apple Watch Ultra 2 (GPS + Cellular 49mm) Smartwatch, Sports Watch with Black Titanium Case with Black Trail Loop (M/L). Fitness Tracker, Precision GPS, Action Button, Carbon Neutral",
+            "image": "https://images-eu.ssl-images-amazon.com/images/I/81LWsjyYoML._AC_UL600_SR600,400_.jpg",
+            "rating": 4.2,
+            "reviews": 24,
+            "price": "R 19,599.00",
+            "link": "/Apple-Cellular-Smartwatch-Titanium-Precision/dp/B0DGHZQY89/ref=zg_bs_g_28034770031_d_sccl_11/261-3268416-0351442?psc=1"
+        },
+        {
+            "rank": 12,
+            "title": "TUFF LUV MF420 Airtag Silicone Wrist band for Kids/Adults, White, One Size",
+            "image": "https://images-eu.ssl-images-amazon.com/images/I/41T8Gpdz-8L._AC_UL600_SR600,400_.jpg",
+            "price": "R 126.50",
+            "link": "/TUFF-LUV-MF420-Airtag-Silicone/dp/B0C7C3ZQVN/ref=zg_bs_g_28034770031_d_sccl_12/261-3268416-0351442?psc=1"
+        },
+        {
+            "rank": 13,
+            "title": "T500+ Smart Watch Series 6 Bluetooth Call 1.75 Touch Screen, wireless charging, Fitness Activity Tracker, Waterproof IP68, Smart Watch for Men Women, For iOS & Android",
+            "image": "https://images-eu.ssl-images-amazon.com/images/I/317OP+sYIvL._AC_UL600_SR600,400_.jpg",
+            "price": "R 300.00",
+            "link": "/Bluetooth-wireless-charging-Activity-Waterproof/dp/B0DK6XCHSC/ref=zg_bs_g_28034770031_d_sccl_13/261-3268416-0351442?psc=1"
+        },
+        {
+            "rank": 14,
+            "title": "HUAWEI Fit 3 Aluminum Smart Watch, 1.82-Inch Size, Black",
+            "image": "https://images-eu.ssl-images-amazon.com/images/I/51-XHYBPO1L._AC_UL600_SR600,400_.jpg",
+            "rating": 4.6,
+            "reviews": 786,
+            "price": "R 2,274.02",
+            "link": "/HUAWEI-Aluminum-Smart-Watch-1-82-Inch/dp/B0D1CM1XSK/ref=zg_bs_g_28034770031_d_sccl_14/261-3268416-0351442?psc=1"
+        },
+        {
+            "rank": 15,
+            "title": "TUFF LUV MF419 Airtag Silicone Wrist band for Kids/Adults, Black, One Size",
+            "image": "https://images-eu.ssl-images-amazon.com/images/I/31uuInx4fCL._AC_UL600_SR600,400_.jpg",
+            "price": "R 109.00",
+            "link": "/TUFF-LUV-MF419-Airtag-Silicone/dp/B0C7C6CHSV/ref=zg_bs_g_28034770031_d_sccl_15/261-3268416-0351442?psc=1"
+        },
+        {
+            "rank": 16,
+            "title": "ALANES Protective Anti-Scratch Holder Case Cover Compatible with Apple AirTag (Black)",
+            "image": "https://images-eu.ssl-images-amazon.com/images/I/41ilkXIN7sL._AC_UL600_SR600,400_.jpg",
+            "price": "R 169.00",
+            "link": "/ALANES-Protective-Anti-Scratch-Holder-Compatible/dp/B0DN8STJLP/ref=zg_bs_g_28034770031_d_sccl_16/261-3268416-0351442?psc=1"
+        },
+        {
+            "rank": 17,
+            "title": "HUAWEI Band 9 Silicone Strap Smart Watch, 1.47-Inch Size, Pink",
+            "image": "https://images-eu.ssl-images-amazon.com/images/I/6151DhmWRXL._AC_UL600_SR600,400_.jpg",
+            "price": "R 999.00",
+            "link": "/HUAWEI-Silicone-Strap-Smart-1-47-Inch/dp/B0D47T5H1N/ref=zg_bs_g_28034770031_d_sccl_17/261-3268416-0351442?psc=1"
+        },
+        {
+            "rank": 18,
+            "title": "Garmin Forerunner 55 Smartwatch, Black",
+            "image": "https://images-eu.ssl-images-amazon.com/images/I/51SqUoJFZAL._AC_UL600_SR600,400_.jpg",
+            "rating": 4.1,
+            "reviews": 36,
+            "price": "R 3,499.00",
+            "link": "/Garmin-Forerunner-55-Smartwatch-Black/dp/B08K2G9H96/ref=zg_bs_g_28034770031_d_sccl_18/261-3268416-0351442?psc=1"
+        },
+        {
+            "rank": 19,
+            "title": "TROO Blue Light Blocking Classic Round Glasses - Gaming/Smartphones/Tablets (Transparent Grey)",
+            "image": "https://images-eu.ssl-images-amazon.com/images/I/41EvdschNsL._AC_UL600_SR600,400_.jpg",
+            "price": "R 165.00",
+            "link": "/TROO-Light-Blocking-Classic-Glasses/dp/B0CTXCXSXV/ref=zg_bs_g_28034770031_d_sccl_19/261-3268416-0351442?psc=1"
+        },
+        {
+            "rank": 20,
+            "title": "Garmin fenix 8 51mm, AMOLED, Glass/SS, Slate Gray Steel/Black, WW",
+            "image": "https://images-eu.ssl-images-amazon.com/images/I/51UNwTnVQeL._AC_UL600_SR600,400_.jpg",
+            "rating": 4.2,
+            "reviews": 17,
+            "link": "/Garmin-fenix-AMOLED-Glass-Slate/dp/B0DC71V3ZD/ref=zg_bs_g_28034770031_d_sccl_20/261-3268416-0351442?psc=1"
+        }
+    ]
+}

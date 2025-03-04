@@ -1,0 +1,86 @@
+{
+    "best_sellers": [
+        {
+            "rank": 1,
+            "product_name": "Samsung Galaxy Fit3 Smart Watch, Grey",
+            "image_url": "https://images-eu.ssl-images-amazon.com/images/I/41UlgWY4b0L._AC_UL600_SR600,400_.jpg",
+            "rating": "4.6 out of 5 stars",
+            "rating_count": 8,
+            "price": "R 999.00",
+            "url": "/Samsung-Galaxy-Fit3-Smart-Watch/dp/B0D17DP3YC/ref=zg_bs_g_28034770031_d_sccl_1/257-1284023-4667835?psc=1"
+        },
+        {
+            "rank": 2,
+            "product_name": "Apple AirPods 4 Wireless Earbuds, Bluetooth Headphones, Personalised Spatial Audio, Sweat and Water Resistant, USB C Charging",
+            "image_url": "https://images-eu.ssl-images-amazon.com/images/I/61DvMw16ITL._AC_UL600_SR600,400_.jpg",
+            "rating": "4.1 out of 5 stars",
+            "rating_count": 111,
+            "price": "R 2,499.00",
+            "url": "/Apple-Bluetooth-Headphones-Personalised-Effortless/dp/B0DGHYPFGK/ref=zg_bs_g_28034770031_d_sccl_2/257-1284023-4667835?psc=1"
+        },
+        {
+            "rank": 3,
+            "product_name": "Garmin Vivoactive 5 Music Edition Fitness and Health Smartwatch, Black/Slate",
+            "image_url": "https://images-eu.ssl-images-amazon.com/images/I/61A4yOWzGBL._AC_UL600_SR600,400_.jpg",
+            "rating": "4.3 out of 5 stars",
+            "rating_count": 1679,
+            "price": "R 4,999.00",
+            "url": "/Garmin-Vivoactive-Fitness-Health-Smartwatch/dp/B0CG6NR413/ref=zg_bs_g_28034770031_d_sccl_3/257-1284023-4667835?psc=1"
+        },
+        {
+            "rank": 4,
+            "product_name": "Jabra Talk 25 SE Mono Wireless Single Ear Bluetooth Headset with Built-In Microphone, Black",
+            "image_url": "https://images-eu.ssl-images-amazon.com/images/I/51f3ir8XXoL._AC_UL600_SR600,400_.jpg",
+            "rating": "4.0 out of 5 stars",
+            "rating_count": 1629,
+            "price": "R 599.96",
+            "url": "/Jabra-Wireless-Bluetooth-Headset-Microphone/dp/B09NQ71KM9/ref=zg_bs_g_28034770031_d_sccl_4/257-1284023-4667835?psc=1"
+        },
+        {
+            "rank": 5,
+            "product_name": "Jabra Talk 15 SE Mono Wireless Single Ear Bluetooth Headset with Built-In Microphone, Black",
+            "image_url": "https://images-eu.ssl-images-amazon.com/images/I/61oknXDMhKL._AC_UL600_SR600,400_.jpg",
+            "rating": "3.9 out of 5 stars",
+            "rating_count": 671,
+            "price": "R 599.96",
+            "url": "/Jabra-Wireless-Bluetooth-Headset-Microphone/dp/B09NQ71ZKX/ref=zg_bs_g_28034770031_d_sccl_5/257-1284023-4667835?psc=1"
+        },
+        {
+            "rank": 6,
+            "product_name": "Compatible with Apple Watch Series 10 (2024) 42mm Case with Screen Protector, Hard PC Ultra Slim Shockproof All-Around Protective Case for iWatch (Black)",
+            "image_url": "https://images-eu.ssl-images-amazon.com/images/I/71BZd-+E1DL._AC_UL600_SR600,400_.jpg",
+            "price": "R 169.00",
+            "url": "/Compatible-Protector-Shockproof-All-Around-Protective/dp/B0DHTD2VXJ/ref=zg_bs_g_28034770031_d_sccl_6/257-1284023-4667835?psc=1"
+        },
+        {
+            "rank": 7,
+            "product_name": "Retro Generic Classic Design Steel Digital Wristwatch",
+            "image_url": "https://images-eu.ssl-images-amazon.com/images/I/51TuLVpuApL._AC_UL600_SR600,400_.jpg",
+            "price": "R 299.00",
+            "url": "/Generic-Classic-Design-Digital-Wristwatch/dp/B0D8QLP3MX/ref=zg_bs_g_28034770031_d_sccl_7/257-1284023-4667835?psc=1"
+        },
+        {
+            "rank": 8,
+            "product_name": "SE-017 Kids SOS Smart Watch with Camera \u2013 5th Generation LBS Tracker (Blue)",
+            "image_url": "https://images-eu.ssl-images-amazon.com/images/I/41j7FKXkiwL._AC_UL600_SR600,400_.jpg",
+            "price": "R 450.00",
+            "url": "/SE-017-Kids-Smart-Watch-Camera/dp/B0DNFNYKHT/ref=zg_bs_g_28034770031_d_sccl_8/257-1284023-4667835?psc=1"
+        },
+        {
+            "rank": 9,
+            "product_name": "42mm/44mm Magnetic Milanese Strap for Apple Watch (Silver)",
+            "image_url": "https://images-eu.ssl-images-amazon.com/images/I/71C0VJuBylL._AC_UL600_SR600,400_.jpg",
+            "price": "R 89.99",
+            "url": "/Magnetic-Milanese-Strap-Apple-Silver/dp/B0D47GKCP7/ref=zg_bs_g_28034770031_d_sccl_9/257-1284023-4667835?psc=1"
+        },
+        {
+            "rank": 10,
+            "product_name": "for Huawei Watch Fit 3 (2024) Tempered Glass PC Cover 2 In 1 Watch Screen Protector Cover Full Coverage Bumper Case (Transparent)",
+            "image_url": "https://images-eu.ssl-images-amazon.com/images/I/71X3qpibNCL._AC_UL600_SR600,400_.jpg",
+            "rating": "1.0 out of 5 stars",
+            "rating_count": 1,
+            "price": "R 99.00",
+            "url": "/Huawei-Tempered-Protector-Coverage-Transparent/dp/B0D9S3CGHZ/ref=zg_bs_g_28034770031_d_sccl_10/257-1284023-4667835?psc=1"
+        }
+    ]
+}

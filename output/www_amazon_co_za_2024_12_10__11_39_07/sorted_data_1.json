@@ -1,0 +1,212 @@
+{
+    "best_sellers": [
+        {
+            "rank": 1,
+            "product_name": "Samsung Galaxy Fit3 Smart Watch, Grey",
+            "image_url": "https://images-eu.ssl-images-amazon.com/images/I/41UlgWY4b0L._AC_UL600_SR600,400_.jpg",
+            "rating": "4.6 out of 5 stars",
+            "reviews_count": 8,
+            "price": "R 999.00"
+        },
+        {
+            "rank": 2,
+            "product_name": "Apple AirPods 4 Wireless Earbuds, Bluetooth Headphones, Personalised Spatial Audio, Sweat and Water Resistant, USB C Charging Case",
+            "image_url": "https://images-eu.ssl-images-amazon.com/images/I/61DvMw16ITL._AC_UL600_SR600,400_.jpg",
+            "rating": "4.1 out of 5 stars",
+            "reviews_count": 111,
+            "price": "R 2,499.00"
+        },
+        {
+            "rank": 3,
+            "product_name": "Garmin Vivoactive 5 Music Edition Fitness and Health Smartwatch, Black/Slate",
+            "image_url": "https://images-eu.ssl-images-amazon.com/images/I/61A4yOWzGBL._AC_UL600_SR600,400_.jpg",
+            "rating": "4.3 out of 5 stars",
+            "reviews_count": 1679,
+            "price": "R 4,999.00"
+        },
+        {
+            "rank": 4,
+            "product_name": "Jabra Talk 25 SE Mono Wireless Single Ear Bluetooth Headset with Built-In Microphone, Black",
+            "image_url": "https://images-eu.ssl-images-amazon.com/images/I/51f3ir8XXoL._AC_UL600_SR600,400_.jpg",
+            "rating": "4.0 out of 5 stars",
+            "reviews_count": 1629,
+            "price": "R 599.96"
+        },
+        {
+            "rank": 5,
+            "product_name": "Jabra Talk 15 SE Mono Wireless Single Ear Bluetooth Headset with Built-In Microphone, Black",
+            "image_url": "https://images-eu.ssl-images-amazon.com/images/I/61oknXDMhKL._AC_UL600_SR600,400_.jpg",
+            "rating": "3.9 out of 5 stars",
+            "reviews_count": 671,
+            "price": "Unavailable"
+        },
+        {
+            "rank": 6,
+            "product_name": "Compatible with Apple Watch Series 10 (2024) 42mm Case with Screen Protector, Hard PC Ultra Slim Shockproof All-Around Protective Case for iWatch (Black)",
+            "image_url": "https://images-eu.ssl-images-amazon.com/images/I/71BZd-+E1DL._AC_UL600_SR600,400_.jpg",
+            "price": "R 169.00"
+        },
+        {
+            "rank": 7,
+            "product_name": "Retro Generic Classic Design Steel Digital Wristwatch",
+            "image_url": "https://images-eu.ssl-images-amazon.com/images/I/51TuLVpuApL._AC_UL600_SR600,400_.jpg",
+            "price": "R 299.00"
+        },
+        {
+            "rank": 8,
+            "product_name": "SE-017 Kids SOS Smart Watch with Camera \u2013 5th Generation LBS Tracker (Blue)",
+            "image_url": "https://images-eu.ssl-images-amazon.com/images/I/41j7FKXkiwL._AC_UL600_SR600,400_.jpg",
+            "price": "R 450.00"
+        },
+        {
+            "rank": 9,
+            "product_name": "42mm/44mm Magnetic Milanese Strap for Apple Watch (Silver)",
+            "image_url": "https://images-eu.ssl-images-amazon.com/images/I/71C0VJuBylL._AC_UL600_SR600,400_.jpg",
+            "price": "R 89.99"
+        },
+        {
+            "rank": 10,
+            "product_name": "for Huawei Watch Fit 3 (2024) Tempered Glass PC Cover 2 In 1 Watch Screen Protector Cover Full Coverage Bumper Case (Transparent)",
+            "image_url": "https://images-eu.ssl-images-amazon.com/images/I/71X3qpibNCL._AC_UL600_SR600,400_.jpg",
+            "rating": "1.0 out of 5 stars",
+            "reviews_count": 1,
+            "price": "R 99.00"
+        },
+        {
+            "rank": 11,
+            "product_name": "Apple Watch Ultra 2 (GPS + Cellular 49mm) Smartwatch, Sports Watch with Black Titanium Case with Black Trail Loop",
+            "image_url": "https://images-eu.ssl-images-amazon.com/images/I/81LWsjyYoML._AC_UL600_SR600,400_.jpg",
+            "rating": "4.2 out of 5 stars",
+            "reviews_count": 24,
+            "price": "R 19,599.00"
+        },
+        {
+            "rank": 12,
+            "product_name": "TUFF LUV MF420 Airtag Silicone Wrist band for Kids/Adults, White, One Size",
+            "image_url": "https://images-eu.ssl-images-amazon.com/images/I/41T8Gpdz-8L._AC_UL600_SR600,400_.jpg",
+            "price": "R 126.50"
+        },
+        {
+            "rank": 13,
+            "product_name": "T500+ Smart Watch Series 6 Bluetooth Call 1.75 Touch Screen, wireless charging, Fitness Activity Tracker, Waterproof IP68",
+            "image_url": "https://images-eu.ssl-images-amazon.com/images/I/317OP+sYIvL._AC_UL600_SR600,400_.jpg",
+            "price": "R 300.00"
+        },
+        {
+            "rank": 14,
+            "product_name": "HUAWEI Fit 3 Aluminum Smart Watch, 1.82-Inch Size, Black",
+            "image_url": "https://images-eu.ssl-images-amazon.com/images/I/51-XHYBPO1L._AC_UL600_SR600,400_.jpg",
+            "rating": "4.6 out of 5 stars",
+            "reviews_count": 786,
+            "price": "R 2,274.02"
+        },
+        {
+            "rank": 15,
+            "product_name": "TUFF LUV MF419 Airtag Silicone Wrist band for Kids/Adults, Black, One Size",
+            "image_url": "https://images-eu.ssl-images-amazon.com/images/I/31uuInx4fCL._AC_UL600_SR600,400_.jpg",
+            "price": "R 109.00"
+        },
+        {
+            "rank": 16,
+            "product_name": "ALANES Protective Anti-Scratch Holder Case Cover Compatible with Apple AirTag (Black)",
+            "image_url": "https://images-eu.ssl-images-amazon.com/images/I/41ilkXIN7sL._AC_UL600_SR600,400_.jpg",
+            "price": "R 169.00"
+        },
+        {
+            "rank": 17,
+            "product_name": "HUAWEI Band 9 Silicone Strap Smart Watch, 1.47-Inch Size, Pink",
+            "image_url": "https://images-eu.ssl-images-amazon.com/images/I/6151DhmWRXL._AC_UL600_SR600,400_.jpg",
+            "price": "R 999.00"
+        },
+        {
+            "rank": 18,
+            "product_name": "Garmin Forerunner 55 Smartwatch, Black",
+            "image_url": "https://images-eu.ssl-images-amazon.com/images/I/51SqUoJFZAL._AC_UL600_SR600,400_.jpg",
+            "rating": "4.1 out of 5 stars",
+            "reviews_count": 36,
+            "price": "R 3,499.00"
+        },
+        {
+            "rank": 19,
+            "product_name": "TROO Blue Light Blocking Classic Round Glasses - Gaming/Smartphones/Tablets (Transparent Grey)",
+            "image_url": "https://images-eu.ssl-images-amazon.com/images/I/41EvdschNsL._AC_UL600_SR600,400_.jpg",
+            "price": "R 165.00"
+        },
+        {
+            "rank": 20,
+            "product_name": "Garmin fenix 8 51mm,AMOLED,Glass/SS, Slate Gray Steel/Black, WW",
+            "image_url": "https://images-eu.ssl-images-amazon.com/images/I/51UNwTnVQeL._AC_UL600_SR600,400_.jpg",
+            "rating": "4.2 out of 5 stars",
+            "reviews_count": 17,
+            "price": "Unavailable"
+        },
+        {
+            "rank": 21,
+            "product_name": "Garmin Instinct 2X Solar Smartwatch, Graphite",
+            "image_url": "https://images-eu.ssl-images-amazon.com/images/I/71AmBiNLtEL._AC_UL600_SR600,400_.jpg",
+            "rating": "4.6 out of 5 stars",
+            "reviews_count": 430,
+            "price": "R 9,999.00"
+        },
+        {
+            "rank": 22,
+            "product_name": "SMART Bracelet",
+            "image_url": "https://images-eu.ssl-images-amazon.com/images/I/51j9eg+FPYL._AC_UL600_SR600,400_.jpg",
+            "price": "R 120.00"
+        },
+        {
+            "rank": 23,
+            "product_name": "Oielai Metal Strap Compatible with Apple Watch Strap 38mm 41mm 40mm 45mm 44mm 42mm for Women, Replacement Bling Diamond Rhinestone Strap for Apple Watch SE/iWatch Series",
+            "image_url": "https://images-eu.ssl-images-amazon.com/images/I/71aW8tli+oL._AC_UL600_SR600,400_.jpg",
+            "rating": "4.3 out of 5 stars",
+            "reviews_count": 285,
+            "price": "R 449.00"
+        },
+        {
+            "rank": 24,
+            "product_name": "SAMSUNG Buds3 Grey and Buds Case",
+            "image_url": "https://images-eu.ssl-images-amazon.com/images/I/61sEPsNSLeL._AC_UL600_SR600,400_.jpg",
+            "price": "R 2,842.77"
+        },
+        {
+            "rank": 25,
+            "product_name": "Beats Fit Pro \u2013 Wireless Bluetooth Noise Cancelling Earbuds \u2013 Sweat Resistant, Compatible with Apple & Android, Built-in Microphone",
+            "image_url": "https://images-eu.ssl-images-amazon.com/images/I/41ZnfDfUUEL._AC_UL600_SR600,400_.jpg",
+            "rating": "4.3 out of 5 stars",
+            "reviews_count": 234,
+            "price": "R 3,999.00"
+        },
+        {
+            "rank": 26,
+            "product_name": "Smart Bracelet Watch Waterproof Stylish Fitness Tracker (Pink)",
+            "image_url": "https://images-eu.ssl-images-amazon.com/images/I/41IHGITC8wL._AC_UL600_SR600,400_.jpg",
+            "price": "R 489.00"
+        },
+        {
+            "rank": 27,
+            "product_name": "LED electronic digital smart watch fashion trend men and women personality sports leisure cool Bracelet (green)",
+            "image_url": "https://images-eu.ssl-images-amazon.com/images/I/41po2EFv5eL._AC_UL600_SR600,400_.jpg",
+            "price": "Unavailable"
+        },
+        {
+            "rank": 28,
+            "product_name": "FocusFit\u00ae Garmin Compatible Charger Data Cable for Forerunner 235/35/64/230/630/645/645 Music/735XT / Approach S20/G10 /Vivomove",
+            "image_url": "https://images-eu.ssl-images-amazon.com/images/I/61C5DOppMhL._AC_UL600_SR600,400_.jpg",
+            "price": "R 169.00"
+        },
+        {
+            "rank": 29,
+            "product_name": "Garmin Quick Release Silicone Strap",
+            "image_url": "https://images-eu.ssl-images-amazon.com/images/I/71sGEWFWkxL._AC_UL600_SR600,400_.jpg",
+            "rating": "3.9 out of 5 stars",
+            "reviews_count": 408,
+            "price": "R 3,299.00"
+        },
+        {
+            "rank": 30,
+            "product_name": "FocusFit\u00ae Garmin Compatible Charger Data Cable Set of 2 for Fenix, Approach, Forerunner, Instinct, Venu, Vivoactive, Vivosport & More",
+            "image_url": "https://images-eu.ssl-images-amazon.com/images/I/718Etb1kl4L._AC_UL600_SR600,400_.jpg",
+            "price": "R 190.00"
+        }
+    ]
+}

@@ -1,0 +1,46 @@
+{
+    "listings": [
+        {
+            "price": "R 999.00",
+            "name": "Samsung Galaxy Fit3 Smart Watch, Grey",
+            "rating": "4.6 out of 5 stars",
+            "number of reviews": "8"
+        },
+        {
+            "price": "R 2,499.00",
+            "name": "Apple AirPods 4 Wireless Earbuds, Bluetooth Headphones, Personalised Spatial Audio, Sweat and Water Resistant, USB C Charging",
+            "rating": "4.1 out of 5 stars",
+            "number of reviews": "111"
+        },
+        {
+            "price": "R 4,999.00",
+            "name": "Garmin Vivoactive 5 Music Edition Fitness and Health Smartwatch, Black/Slate",
+            "rating": "4.3 out of 5 stars",
+            "number of reviews": "1,679"
+        },
+        {
+            "price": "R 599.96",
+            "name": "Jabra Talk 25 SE Mono Wireless Single Ear Bluetooth Headset with Built-In Microphone, Black",
+            "rating": "4.0 out of 5 stars",
+            "number of reviews": "1,629"
+        },
+        {
+            "price": "R 300.00",
+            "name": "T500+ Smart Watch Series 6 Bluetooth Call 1.75 Touch Screen, wireless charging, Fitness Activity Tracker, Waterproof IP68",
+            "rating": "N/A",
+            "number of reviews": "N/A"
+        },
+        {
+            "price": "R 9,999.00",
+            "name": "Garmin Instinct 2X Solar Smartwatch, Graphite",
+            "rating": "4.6 out of 5 stars",
+            "number of reviews": "430"
+        },
+        {
+            "price": "R 3,499.00",
+            "name": "Garmin Forerunner 55 Smartwatch, Black",
+            "rating": "4.1 out of 5 stars",
+            "number of reviews": "36"
+        }
+    ]
+}

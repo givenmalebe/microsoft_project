@@ -1,0 +1,64 @@
+{
+    "listings": [
+        {
+            "name": "Samsung Galaxy Fit3 Smart Watch, Grey",
+            "price": "R 999.00",
+            "rating": "4.6 out of 5 stars",
+            "number of reviews": "8"
+        },
+        {
+            "name": "Apple AirPods 4 Wireless Earbuds, Bluetooth Headphones, Personalised Spatial Audio, Sweat and Water Resistant, USB C Charging",
+            "price": "R 2,499.00",
+            "rating": "4.1 out of 5 stars",
+            "number of reviews": "111"
+        },
+        {
+            "name": "42mm/44mm Magnetic Milanese Strap for Apple Watch (Black)",
+            "price": "R 99.99",
+            "rating": "N/A",
+            "number of reviews": "N/A"
+        },
+        {
+            "name": "42mm/44mm Magnetic Milanese Strap for Apple Watch (Silver)",
+            "price": "R 89.99",
+            "rating": "N/A",
+            "number of reviews": "N/A"
+        },
+        {
+            "name": "SAMSUNG Buds3 White and Buds Case",
+            "price": "R 2,842.77",
+            "rating": "N/A",
+            "number of reviews": "N/A"
+        },
+        {
+            "name": "SAMSUNG Silver Watch7 44mm BT with Blue Athleisure Band",
+            "price": "R 7,399.00",
+            "rating": "5.0 out of 5 stars",
+            "number of reviews": "2"
+        },
+        {
+            "name": "FocusFit\u00ae Garmin Compatible Charger Data Cable for Fenix, Approach, Forerunner, Instinct, Venu, Vivoactive, Vivosport & More",
+            "price": "R 169.00",
+            "rating": "N/A",
+            "number of reviews": "N/A"
+        },
+        {
+            "name": "Garmin Vivoactive 5 Music Edition Fitness and Health Smartwatch, Black/Slate",
+            "price": "R 4,999.00",
+            "rating": "4.3 out of 5 stars",
+            "number of reviews": "1,679"
+        },
+        {
+            "name": "Jabra Talk 25 SE Mono Wireless Single Ear Bluetooth Headset with Built-In Microphone, Black",
+            "price": "R 599.96",
+            "rating": "4.0 out of 5 stars",
+            "number of reviews": "1,629"
+        },
+        {
+            "name": "HUAWEI Fit 3 Aluminum Smart Watch, 1.82-Inch Size, Black",
+            "price": "R 2,274.02",
+            "rating": "4.6 out of 5 stars",
+            "number of reviews": "786"
+        }
+    ]
+}

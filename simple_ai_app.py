@@ -2149,7 +2149,34 @@ if country:
             3. Return to this tab after data is loaded
             """)
 else:
-    st.info("👈 Please enter a country name in the sidebar to begin.") 
+    # Enhanced landing page
+    st.markdown("# 🏥 Welcome to AI Doctor - Health Data Analyzer")
+    
+    st.markdown("""
+    ### Your Intelligent Healthcare Analysis Assistant
+    
+    This application helps you analyze and understand healthcare data across different countries, 
+    with a focus on chronic diseases and public health indicators.
+    
+    #### What You Can Do:
+    - 📊 Analyze health indicators and trends
+    - 💬 Chat with AI Doctor about health data
+    - 🔍 Get detailed insights about chronic diseases
+    
+    #### How to Start:
+    1. Enter a country name in the sidebar ←
+    2. Choose your analysis view
+    3. Explore the data or chat with AI Doctor
+    
+    #### Features:
+    - Real-time data analysis
+    - AI-powered insights
+    - Interactive visualizations
+    - Natural language queries
+    """)
+    
+    # Call-to-action box
+    st.info("👈 To begin your analysis, please enter a country name in the sidebar")
 
 # Function to create automatic visualizations for tables
 def create_table_visualization(df, title=None, chart_type=None):

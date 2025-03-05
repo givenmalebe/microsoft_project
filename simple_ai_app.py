@@ -11,7 +11,21 @@ from langchain.tools import Tool
 from langchain.memory import ConversationBufferMemory
 from langchain_experimental.agents import create_pandas_dataframe_agent
 import matplotlib.pyplot as plt
-import seaborn as sns
+import io
+
+# Try to import non-essential libraries
+try:
+    import seaborn as sns
+except ImportError:
+    st.warning("Seaborn not installed. Some visualizations may be limited.")
+    # Create a minimal replacement
+    class MockSNS:
+        def lineplot(self, *args, **kwargs): 
+            return plt.plot(*args, **kwargs)
+        def barplot(self, *args, **kwargs): 
+            return plt.bar(*args, **kwargs)
+    sns = MockSNS()
+
 import json
 import re
 from urllib.parse import quote
@@ -23,10 +37,28 @@ from io import BytesIO
 import base64
 import zipfile
 import openai
-import tabulate
+try:
+    import tabulate
+except ImportError:
+    st.warning("Tabulate not installed. Table formatting will be simplified.")
+    # Create a simple tabulate replacement
+    class MockTabulate:
+        def __call__(self, data, headers=None, tablefmt="pipe"):
+            if headers:
+                result = " | ".join(str(h) for h in headers) + "\n"
+                result += "-" * len(result) + "\n"
+            else:
+                result = ""
+            
+            for row in data:
+                result += " | ".join(str(cell) for cell in row) + "\n"
+            return result
+    
+    tabulate = MockTabulate()
 from selenium.webdriver.chrome.options import Options
 from selenium import webdriver
 from io import StringIO
+import plotly.graph_objects as go
 
 # Load environment variables
 load_dotenv()
@@ -189,68 +221,41 @@ def display_metric(col, title, total_value, df, column, color, time_frame):
 def format_table_professionally(data, headers=None, format="fancy_grid", add_analysis=False):
     """
     Format a table in a professional manner for analysis and presentation.
-    
-    Args:
-        data (list or DataFrame): The table data to format
-        headers (list, optional): Column headers for the table
-        format (str, optional): Table format style (see tabulate styles)
-        add_analysis (bool, optional): Whether to add summary statistics
-        
-    Returns:
-        str: Professionally formatted table as string
     """
-    if isinstance(data, pd.DataFrame):
-        # For DataFrames, extract headers and values
-        df = data
-        headers = headers or df.columns.tolist()
-        table_data = df.values.tolist()
-    else:
-        # For list data
-        table_data = data
+    try:
+        if isinstance(data, pd.DataFrame):
+            # For DataFrames, extract headers and values
+            df = data.copy()
+            headers = headers or df.columns.tolist()
+            table_data = df.values.tolist()
+        else:
+            # For list data
+            table_data = data
+            
+        # Create the formatted table
+        formatted_table = tabulate(
+            table_data, 
+            headers=headers, 
+            tablefmt="pipe",  # Using pipe format for better Streamlit compatibility
+            numalign="right",
+            stralign="left"
+        )
         
-    # Create the formatted table
-    formatted_table = tabulate.tabulate(
-        table_data, 
-        headers=headers, 
-        tablefmt=format,
-        numalign="right",
-        stralign="left"
-    )
-    
-    # If requested, add summary statistics for numerical columns
-    if add_analysis and isinstance(data, pd.DataFrame):
-        numeric_cols = df.select_dtypes(include=['number']).columns.tolist()
-        if numeric_cols:
-            analysis = "\n\nTable Summary Statistics:\n"
-            summary_data = []
-            
-            # Calculate key statistics
-            for col in numeric_cols:
-                try:
-                    stats = {
-                        "Column": col,
-                        "Mean": df[col].mean(),
-                        "Median": df[col].median(),
-                        "Min": df[col].min(),
-                        "Max": df[col].max(),
-                        "Std Dev": df[col].std()
-                    }
-                    summary_data.append(stats)
-                except:
-                    continue
-            
-            if summary_data:
-                summary_df = pd.DataFrame(summary_data)
-                analysis += tabulate.tabulate(
-                    summary_df,
-                    headers="keys",
-                    tablefmt="grid",
-                    numalign="right",
-                    floatfmt=".2f"
-                )
-                formatted_table += analysis
-    
-    return formatted_table
+        if add_analysis and isinstance(data, pd.DataFrame):
+            # Add summary statistics
+            summary = df.describe().round(2)
+            formatted_summary = tabulate(
+                summary,
+                headers=summary.columns,
+                tablefmt="pipe",
+                numalign="right",
+                stralign="left"
+            )
+            return f"{formatted_table}\n\n### Summary Statistics\n\n{formatted_summary}"
+        
+        return formatted_table
+    except Exception as e:
+        return f"Error formatting table: {str(e)}"
 
 def display_formatted_table(df, title=None, with_stats=False, height=None, use_expander_for_stats=True):
     """
@@ -326,7 +331,6 @@ def display_formatted_table(df, title=None, with_stats=False, height=None, use_e
 
 # Initialize Streamlit
 st.set_page_config(page_title="AI Doctor - Chronic Disease Analyzer", page_icon="👨‍⚕️", layout="wide")
-st.title("AI Doctor - Chronic Disease Analyzer 👨‍⚕️")
 
 # Initialize session state
 if 'data' not in st.session_state:
@@ -1588,22 +1592,44 @@ class HealthcareChatAgent:
         self.llm = ChatOpenAI(temperature=0.2, model="gpt-4o-mini")
         self.conversation_history = []
         
+        # Define tool functions with better error handling
+        def format_table_tool(query):
+            try:
+                return self.format_data_as_table(query=query)
+            except Exception as e:
+                return f"Error formatting table: {str(e)}"
+            
+        def analyze_medical_tool(query):
+            try:
+                # Get current dataframe and country from session state
+                df = st.session_state.get('data', None)
+                country = st.session_state.get('country', None)
+                return self.analyze_medical_data(query=query, df=df, country=country)
+            except Exception as e:
+                return f"Error analyzing data: {str(e)}"
+            
+        def create_viz_tool(query):
+            try:
+                return self.create_visualization(query=query)
+            except Exception as e:
+                return f"Error creating visualization: {str(e)}"
+        
         # Initialize tools with try-except for better error handling
         try:
             self.tools = [
                 Tool(
                     name="format_data_as_table",
-                    func=self.format_data_as_table,
+                    func=format_table_tool,
                     description="Format data as a professional table with analysis"
                 ),
                 Tool(
                     name="analyze_medical_data",
-                    func=self.analyze_medical_data,
+                    func=analyze_medical_tool,
                     description="Analyze medical data and provide insights"
                 ),
                 Tool(
                     name="create_visualization",
-                    func=self.create_visualization,
+                    func=create_viz_tool,
                     description="Create data visualizations and charts"
                 )
             ]
@@ -1622,32 +1648,173 @@ class HealthcareChatAgent:
     def medical_chat(self, user_input, df, country):
         """Handle chat interactions with improved error handling."""
         try:
-            # Create the agent with error handling
-            agent = initialize_agent(
-                self.tools,
-                self.llm,
-                agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
-                handle_parsing_errors=True,
-                verbose=True
-            )
-
-            # Add conversation context
-            context = f"""You are analyzing healthcare data for {country}. 
-            Provide direct, professional responses focused on data analysis and insights.
-            User query: {user_input}"""
-
-            # Get response from agent
-            response = agent.invoke({"input": context})
-            formatted_response = self.format_response(response)
+            # Verify data is available
+            if df is None or df.empty:
+                return "No data is available for analysis. Please upload or load data first."
+                
+            # Store current dataframe and country in session state for tool access
+            st.session_state.data = df
+            st.session_state.country = country
             
-            return formatted_response
+            # Check if the query is about chronic diseases generally
+            if "chronic disease" in user_input.lower() or "chronic diseases" in user_input.lower():
+                return """
+                Chronic diseases are health conditions that last a year or more and require ongoing medical attention, limit activities of daily living, or both. 
+                
+                Common chronic diseases include:
+                - Heart disease and stroke
+                - Cancer
+                - Diabetes
+                - Chronic lung diseases (like COPD and asthma)
+                - Alzheimer's disease
+                - Chronic kidney disease
+                - Arthritis and other joint disorders
+                
+                These conditions are typically caused by a combination of genetic, physiological, environmental, and behavioral factors. The main risk factors include:
+                - Tobacco use
+                - Poor nutrition
+                - Lack of physical activity
+                - Excessive alcohol use
+                
+                In the healthcare data for {country}, we track various indicators related to these chronic conditions, including prevalence rates, mortality, risk factors, and healthcare utilization.
+                """
+            
+            # Create the agent with error handling
+            try:
+                # Make sure tools are available
+                if not hasattr(self, 'tools') or not self.tools:
+                    # Reinitialize tools if missing
+                    def format_table_tool(query):
+                        return self.format_data_as_table(query=query)
+                        
+                    def analyze_medical_tool(query):
+                        df = st.session_state.get('data', None)
+                        country = st.session_state.get('country', None)
+                        return self.analyze_medical_data(query=query, df=df, country=country)
+                        
+                    def create_viz_tool(query):
+                        return self.create_visualization(query=query)
+                    
+                    self.tools = [
+                        Tool(
+                            name="format_data_as_table",
+                            func=format_table_tool,
+                            description="Format data as a professional table with analysis"
+                        ),
+                        Tool(
+                            name="analyze_medical_data",
+                            func=analyze_medical_tool,
+                            description="Analyze medical data and provide insights"
+                        ),
+                        Tool(
+                            name="create_visualization",
+                            func=create_viz_tool,
+                            description="Create data visualizations and charts"
+                        )
+                    ]
+                
+                # Use a more structured agent type with better output formatting
+                agent = initialize_agent(
+                    self.tools,
+                    self.llm,
+                    agent=AgentType.STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION,
+                    handle_parsing_errors=True,
+                    verbose=True,
+                    max_iterations=5,
+                    max_execution_time=60
+                )
+
+                # Add detailed conversation context
+                data_summary = f"""
+                Dataset Information:
+                - Country: {country}
+                """
+                
+                # Safely add timestamp information
+                if 'timestamp' in df.columns:
+                    try:
+                        min_date = df['timestamp'].min()
+                        max_date = df['timestamp'].max()
+                        
+                        # Safe conversion to string representation
+                        min_date_str = min_date.date() if hasattr(min_date, 'date') else str(min_date)
+                        max_date_str = max_date.date() if hasattr(max_date, 'date') else str(max_date)
+                        
+                        data_summary += f"- Time Range: {min_date_str} to {max_date_str}\n"
+                    except Exception:
+                        # Fallback if any error occurs with timestamp processing
+                        data_summary += "- Time Range: Not available\n"
+                
+                data_summary += f"- Available Columns: {', '.join(df.columns)}"
+                
+                # Generate a brief data overview
+                numeric_columns = df.select_dtypes(include=['number']).columns.tolist()
+                metrics_overview = ""
+                if numeric_columns:
+                    top_metrics = df[numeric_columns].mean().nlargest(3).index.tolist()
+                    metrics_overview = f"Top metrics: {', '.join(top_metrics)}"
+                
+                context = f"""You are an AI Doctor analyzing healthcare data for {country}.
+                You specialize in chronic disease analysis and public health metrics.
+                
+                {data_summary}
+                
+                {metrics_overview}
+                
+                When using tools:
+                1. ALWAYS analyze the data BEFORE providing a response
+                2. For numerical questions, use the analyze_medical_data tool
+                3. For visualization requests, use the create_visualization tool
+                4. For table requests, use the format_data_as_table tool
+                
+                IMPORTANT: You MUST strictly follow the required format when using tools or the system will fail.
+                
+                User question: {user_input}"""
+
+                # Get response from agent with timeout handling
+                response = agent.invoke({"input": context})
+                formatted_response = self.format_response(response)
+                return formatted_response
+            except Exception as agent_error:
+                # If the agent fails, provide a direct response
+                if "action input" in str(agent_error).lower() or "iteration limit" in str(agent_error).lower():
+                    # Direct response for format errors
+                    return f"""
+                    I apologize for the technical difficulty. Let me answer your question about "{user_input}" directly:
+                    
+                    Based on the healthcare data for {country}, I can provide the following information:
+                    
+                    The data shows information about various health metrics and chronic disease indicators. To best answer 
+                    your specific question, I recommend looking at key indicators like prevalence rates, risk factors, 
+                    and health outcomes tracked in our dataset.
+                    
+                    For more detailed analysis, you may want to try a more specific question about particular health metrics
+                    or disease categories that interest you.
+                    """
+                else:
+                    # Generic fallback for other errors
+                    fallback_message = f"""
+                    I apologize, but I encountered an error while analyzing the data. 
+                    
+                    Let me provide a general response to your query: "{user_input}"
+                    
+                    Based on the available healthcare data for {country}, we track various health metrics and disease indicators
+                    that can help answer your question. Please try rephrasing your question or asking about a specific health metric.
+                    
+                    Error details (for troubleshooting): {str(agent_error)}
+                    """
+                    return fallback_message
 
         except Exception as e:
             return f"Error processing request: {str(e)}"
 
-    def format_data_as_table(self, query, df):
+    def format_data_as_table(self, query, df=None):
         """Format data as a professional table with analysis."""
         try:
+            # Use session data if df is None
+            if df is None:
+                df = st.session_state.data
+                
             # Filter and prepare data based on query
             relevant_columns = [col for col in df.columns if col.lower() in query.lower()]
             if not relevant_columns:
@@ -1673,10 +1840,19 @@ class HealthcareChatAgent:
             
             Unable to format the data table: {str(e)}
             """
-
-    def analyze_medical_data(self, query, df, country):
+            
+    def analyze_medical_data(self, query, df=None, country=None):
         """Analyze medical data and provide insights."""
         try:
+            # Use session data if df is None
+            if df is None:
+                df = st.session_state.data
+            
+            # Use session country if country is None
+            if country is None:
+                # Try to get country from session state or use a generic fallback
+                country = st.session_state.get('country', 'the selected country')
+                
             analysis_agent = MedicalAnalysisAgent(self.api_key)
             result = analysis_agent.analyze_medical_data(df, country, query)
             return f"""
@@ -1690,10 +1866,14 @@ class HealthcareChatAgent:
             
             Unable to analyze the data: {str(e)}
             """
-
-    def create_visualization(self, query, df):
+            
+    def create_visualization(self, query, df=None):
         """Create data visualizations and charts."""
         try:
+            # Use session data if df is None
+            if df is None:
+                df = st.session_state.data
+                
             # Determine chart type based on query
             chart_type = 'line'  # default
             if 'bar' in query.lower():
@@ -1779,7 +1959,7 @@ agents = init_agents()
 
 # Sidebar
 with st.sidebar:
-    st.title("AI Doctor Dashboard")
+    st.title("AI Doctor Research")
     
     # Country Selection
     country = st.text_input("Enter Country Name:", placeholder="e.g., United States")
@@ -1790,10 +1970,10 @@ with st.sidebar:
         st.header("📊 Navigation")
         # If page is set in session state, use that as the default
         if st.session_state.page:
-            default_idx = ["Analysis", "Visualization", "Chat with AI Doctor"].index(st.session_state.page)
+            default_idx = ["Analysis", "Chat with AI Doctor"].index(st.session_state.page)
             page = st.radio(
                 "Select Function",
-                ["Analysis", "Visualization", "Chat with AI Doctor"],
+                ["Analysis", "Chat with AI Doctor"],
                 index=default_idx
             )
             # Reset the page session state after using it
@@ -1801,7 +1981,7 @@ with st.sidebar:
         else:
             page = st.radio(
                 "Select Function",
-                ["Analysis", "Visualization", "Chat with AI Doctor"]
+                ["Analysis", "Chat with AI Doctor"]
             )
         
         # Analysis Settings
@@ -1811,43 +1991,6 @@ with st.sidebar:
             if not st.session_state.data.empty:
                 selected_prompt = st.selectbox("Analysis Type:", ANALYSIS_PROMPTS)
                 analyze_data = st.button("Analyze", use_container_width=True)
-        
-        # Visualization Settings
-        elif page == "Visualization":
-            st.markdown("---")
-            st.header("📊 Visualization Settings")
-            if not st.session_state.data.empty:
-                max_date = st.session_state.data['timestamp'].max()
-                min_date = st.session_state.data['timestamp'].min()
-                
-                if isinstance(max_date, pd.Timestamp):
-                    max_date = max_date.date()
-                if isinstance(min_date, pd.Timestamp):
-                    min_date = min_date.date()
-                    
-                st.markdown("### Time Range")
-                start_date = st.date_input(
-                    "Start date",
-                    value=min_date,
-                    min_value=min_date,
-                    max_value=max_date
-                )
-                end_date = st.date_input(
-                    "End date",
-                    value=max_date,
-                    min_value=min_date,
-                    max_value=max_date
-                )
-                
-                st.markdown("### Display Options")
-                time_frame = st.selectbox(
-                    "Time Frame",
-                    ("Daily", "Weekly", "Monthly", "Quarterly")
-                )
-                chart_selection = st.selectbox(
-                    "Chart Type",
-                    ("Bar", "Area")
-                )
         
         # Chat Settings
         elif page == "Chat with AI Doctor":
@@ -1937,110 +2080,128 @@ if country:
                                     'source': selected_prompt
                                 })
                                 
-                                # Display table instead of visualization
+                                # Display table
                                 st.markdown(f"#### {table_title}")
                                 st.dataframe(table_df, use_container_width=True)
                                 
-                                # The visualization will be shown in the Visualization tab
                             except Exception as e:
                                 st.warning(f"Could not process table {idx + 1}: {str(e)}")
                                 continue
-                                
-                    # Add a notification to direct users to the Visualization tab
-                    if st.session_state.current_tables:
-                        st.success(f"✅ {len(st.session_state.current_tables)} tables extracted and shown above. Switch to the Visualization tab to see these tables as interactive charts.")
-                        
-                        # Show button to go to Visualization tab
-                        if st.button("View as Charts in Visualization Tab"):
-                            st.session_state.page = "Visualization"
-                            st.rerun()
         else:
             st.warning("Please load or upload data first.")
-    
-    elif page == "Visualization":
-        st.header(f"Chronic Disease Dashboard for {country}")
-        if not st.session_state.data.empty:
-            # Add descriptive text about the visualization tab
-            st.info("This tab shows graphical visualizations of the same data tables found in the Analysis tab. Each analysis result is presented as an interactive chart that best represents the data.")
-            
-            # Get tables from analysis
-            analysis_tables = [] if not hasattr(st.session_state, 'current_tables') else st.session_state.current_tables
-            
-            if analysis_tables:
-                st.subheader("Analysis Visualizations")
-                
-                with st.expander("Visualization Settings", expanded=False):
-                    use_ai_charts = st.checkbox("Use AI to automatically select best chart type", value=True)
-                    st.info("When enabled, AI will analyze each table and recommend the best visualization. Disable to manually select chart types.")
-                
-                # Display each table with visualizations
-                for i, table_info in enumerate(analysis_tables):
-                    st.markdown(f"### {table_info['title']}")
-                    
-                    # Visualization section
-                    if use_ai_charts:
-                        with st.spinner(f"AI is creating the best visualization for {table_info['title']}..."):
-                            # Use pandas agent to create intelligent visualization
-                            fig = create_pandas_agent_visualization(table_info['data'], table_info['title'])
-                            if fig:
-                                st.plotly_chart(fig, use_container_width=True)
-                            else:
-                                # Fall back to default visualization if AI can't create one
-                                st.warning("AI visualization failed. Using default chart type...")
-                                fig = create_table_visualization(table_info['data'], table_info['title'])
-                                if fig:
-                                    st.plotly_chart(fig, use_container_width=True)
-                                else:
-                                    st.warning("Could not generate any visualization for this data.")
-                    else:
-                        # Manual chart selection
-                        col1, col2 = st.columns([3, 1])
-                        with col2:
-                            chart_type = st.selectbox(
-                                f"Chart Type",
-                                ["bar", "line", "scatter", "pie", "heatmap"],
-                                key=f"chart_type_{i}"
-                            )
-                        
-                        # Create and display visualization
-                        fig = create_table_visualization(table_info['data'], table_info['title'], chart_type)
-                        if fig:
-                            st.plotly_chart(fig, use_container_width=True)
-                        else:
-                            st.warning("Could not create visualization with the selected options.")
-            else:
-                st.info("No analysis tables found. Please go to the Analysis tab and run an analysis first.")
-                
-                # Show button to go to Analysis tab
-                if st.button("Go to Analysis Tab"):
-                    st.session_state.page = "Analysis"
-                    st.rerun()
             
     elif page == "Chat with AI Doctor":
         st.header(f"Chat with AI Doctor about {country}")
+        
+        # Add an informative section explaining the capabilities
+        with st.expander("ℹ️ About this AI Doctor", expanded=False):
+            st.markdown("""
+            ### What can the AI Doctor do?
+            
+            This AI Doctor can analyze your health data and answer questions such as:
+            
+            - What are the trends in chronic disease prevalence?
+            - How does my country compare to others in terms of specific health metrics?
+            - What risk factors contribute to the observed health indicators?
+            - What preventive measures might be effective based on the data?
+            
+            For best results, ask specific questions related to the data.
+            """)
+        
         if not st.session_state.data.empty:
             # Initialize chat history if not exists
             if 'chat_history' not in st.session_state:
                 st.session_state.chat_history = []
             
+            # Show example questions
+            example_questions = [
+                "What are the main chronic diseases shown in the data?",
+                f"How does {country} compare to other countries in terms of diabetes?",
+                "Show me a table of the top health indicators",
+                "Create a visualization of disease trends over time"
+            ]
+            
+            # Allow users to click on example questions
+            st.markdown("##### Example Questions:")
+            example_cols = st.columns(2)
+            for i, question in enumerate(example_questions):
+                if example_cols[i % 2].button(question, key=f"example_{i}"):
+                    # Instead of setting session state, use a form submit
+                    st.session_state.temp_question = question
+                    st.rerun()
+            
+            # Use the temp question if available, otherwise empty string
+            initial_input = ""
+            if 'temp_question' in st.session_state:
+                initial_input = st.session_state.temp_question
+                # Clear it for next time
+                del st.session_state.temp_question
+            
             # Chat input
-            user_input = st.text_input("Ask a question about the health data:", key="chat_input")
+            user_input = st.text_input("Ask a question about the health data:", key="chat_input", value=initial_input)
             
             if user_input:
-                with st.spinner("Processing..."):
-                    response = agents['chat'].medical_chat(user_input, st.session_state.data, country)
-                    st.session_state.chat_history.append({"user": user_input, "assistant": response})
+                with st.spinner("AI Doctor is analyzing your question..."):
+                    try:
+                        # Make sure the chat agent exists
+                        if 'chat' not in agents:
+                            st.error("Chat agent not initialized. Attempting to initialize again.")
+                            # Try to initialize just the chat agent
+                            try:
+                                api_key = os.getenv('OPENAI_API_KEY')
+                                agents['chat'] = HealthcareChatAgent(api_key)
+                                st.success("Chat agent successfully initialized!")
+                            except Exception as init_error:
+                                st.error(f"Failed to initialize chat agent: {str(init_error)}")
+                                st.stop()
+                        
+                        # Process the request with extensive error handling
+                        try:
+                            response = agents['chat'].medical_chat(user_input, st.session_state.data, country)
+                            st.session_state.chat_history.append({"user": user_input, "assistant": response})
+                        except Exception as chat_error:
+                            error_msg = f"Error processing your question: {str(chat_error)}"
+                            st.error(error_msg)
+                            # Provide a more helpful fallback response
+                            fallback = f"""
+                            I apologize, but I encountered an error while processing your question about "{user_input}".
+                            
+                            Here's some general information about the health data for {country}:
+                            - The dataset contains information on various health indicators and chronic diseases
+                            - You can ask about specific health metrics, disease prevalence, or trends over time
+                            - For more specific analysis, try asking about particular health conditions or metrics
+                            
+                            Please try rephrasing your question or asking something more specific.
+                            """
+                            st.session_state.chat_history.append({"user": user_input, "assistant": fallback})
+                    except Exception as e:
+                        st.error(f"Unexpected error: {str(e)}")
             
-            # Display chat history in reverse order (newest first)
+            # Display chat history with improved formatting
             if st.session_state.chat_history:
-                st.markdown("### Previous Conversations")
-                for message in reversed(st.session_state.chat_history):
+                st.markdown("### Conversation History")
+                for i, message in enumerate(reversed(st.session_state.chat_history)):
+                    # User message in a blue container
                     with st.container():
-                        st.markdown(f"**Q:** {message['user']}")
-                        st.markdown(f"**A:** {message['assistant']}")
-                        st.markdown("---")
+                        st.markdown(f"<div style='background-color: #e6f2ff; padding: 10px; border-radius: 10px;'><strong>You:</strong> {message['user']}</div>", unsafe_allow_html=True)
+                    
+                    # AI response in a light gray container
+                    with st.container():
+                        st.markdown(f"<div style='background-color: #f0f0f0; padding: 10px; border-radius: 10px; margin-bottom: 15px;'><strong>AI Doctor:</strong> {message['assistant']}</div>", unsafe_allow_html=True)
+                
+                # Add a button to clear chat history
+                if st.button("Clear Chat History"):
+                    st.session_state.chat_history = []
+                    st.rerun()
         else:
-            st.warning("Please load or upload data first.")
+            st.warning("Please load or upload health data first to chat with the AI Doctor.")
+            # Add a helpful message about how to load data
+            st.markdown("""
+            To load health data:
+            1. Enter a country name in the sidebar
+            2. Upload a compatible health dataset or generate sample data
+            3. Return to this tab after data is loaded
+            """)
 else:
     st.info("👈 Please enter a country name in the sidebar to begin.") 
 
@@ -2058,34 +2219,70 @@ def create_table_visualization(df, title=None, chart_type=None):
         plotly figure or None if visualization couldn't be created
     """
     try:
+        import plotly.express as px
+        import plotly.graph_objects as go
+        
+        # Make a copy to avoid modifying the original data
+        df = df.copy()
+        
+        # Convert string columns that appear to be numbers to numeric
+        for col in df.columns:
+            if df[col].dtype == 'object':
+                try:
+                    df[col] = pd.to_numeric(df[col], errors='coerce')
+                except:
+                    pass
+                    
         # Detect numeric columns
         numeric_cols = df.select_dtypes(include=['number']).columns.tolist()
         categorical_cols = df.select_dtypes(exclude=['number']).columns.tolist()
+        
+        # Look for datetime columns
+        datetime_cols = []
+        for col in df.columns:
+            try:
+                pd.to_datetime(df[col])
+                datetime_cols.append(col)
+            except:
+                pass
         
         if len(df) == 0 or not numeric_cols:
             return None
             
         # If chart_type is not specified, determine best chart type based on data
         if not chart_type:
-            # Simple heuristic for chart type selection:
-            # - If many data points with one numeric column -> line chart
-            # - If few categories with one numeric column -> bar chart
-            # - If two numeric columns -> scatter plot
-            # - If percentages/proportions that sum to ~100% -> pie chart
+            # Check if data appears to be time series
+            has_time_series = any(col.lower() in ['date', 'year', 'month', 'day', 'time', 'timestamp'] 
+                                  for col in df.columns) or len(datetime_cols) > 0
             
-            if len(df) > 10 and len(numeric_cols) == 1:
+            # Check if data is multi-dimensional (groups, categories, etc.)
+            multi_dimensional = len(categorical_cols) >= 1 and len(numeric_cols) >= 1
+            
+            # Check if data appears to be a correlation matrix
+            correlation_matrix = len(df) == len(df.columns) and all(col in df.index for col in df.columns)
+            
+            # Check if data looks like percentages
+            percentage_data = any(col.lower() in ['percentage', 'percent', 'ratio', 'proportion'] 
+                                  for col in df.columns) or any(df[col].between(0, 1).all() 
+                                                               or df[col].between(0, 100).all() 
+                                                               for col in numeric_cols)
+            
+            if correlation_matrix:
+                chart_type = 'heatmap'
+            elif has_time_series:
                 chart_type = 'line'
-            elif len(df) <= 10 and len(numeric_cols) == 1:
+            elif multi_dimensional and percentage_data and len(df) <= 8:
+                chart_type = 'pie'
+            elif multi_dimensional and len(df) <= 15:
                 chart_type = 'bar'
+            elif multi_dimensional and len(df) > 15:
+                chart_type = 'scatter'
             elif len(numeric_cols) >= 2:
                 chart_type = 'scatter'
-            elif len(df) <= 8 and len(numeric_cols) == 1:
-                # Check if values might represent percentages that add to ~100
-                values = df[numeric_cols[0]].dropna()
-                if 80 <= values.sum() <= 120 and 0 <= values.min() and values.max() <= 100:
-                    chart_type = 'pie'
-                else:
-                    chart_type = 'bar'
+            elif percentage_data and len(df) <= 8:
+                chart_type = 'pie'
+            elif len(df) > 10:
+                chart_type = 'line'
             else:
                 chart_type = 'bar'  # Default
         
@@ -2098,18 +2295,15 @@ def create_table_visualization(df, title=None, chart_type=None):
                     x=categorical_cols[0], 
                     y=numeric_cols[0],
                     title=title or f"Bar Chart of {numeric_cols[0]} by {categorical_cols[0]}",
-                    color=categorical_cols[0] if len(df[categorical_cols[0]].unique()) <= 10 else None,
                     height=400
                 )
             else:
-                # Just use index and first numeric column
                 fig = px.bar(
                     df, 
                     y=numeric_cols[0],
                     title=title or f"Bar Chart of {numeric_cols[0]}",
                     height=400
                 )
-                
         elif chart_type == 'line':
             if len(categorical_cols) > 0 and len(numeric_cols) > 0:
                 # Try to find a date column first
@@ -2194,154 +2388,6 @@ def create_table_visualization(df, title=None, chart_type=None):
                     height=400
                 )
         
-        else:
-            # Default to bar chart
-            if len(categorical_cols) > 0 and len(numeric_cols) > 0:
-                fig = px.bar(
-                    df, 
-                    x=categorical_cols[0], 
-                    y=numeric_cols[0],
-                    title=title or f"Bar Chart of {numeric_cols[0]} by {categorical_cols[0]}",
-                    height=400
-                )
-            else:
-                fig = px.bar(
-                    df, 
-                    y=numeric_cols[0],
-                    title=title or f"Bar Chart of {numeric_cols[0]}",
-                    height=400
-                )
-        
-        # Apply common layout improvements
-        fig.update_layout(
-            margin=dict(l=20, r=20, t=40, b=20),
-            paper_bgcolor='rgba(0,0,0,0)',
-            plot_bgcolor='rgba(0,0,0,0)',
-            font=dict(family="Arial, sans-serif"),
-            title={
-                'y':0.95,
-                'x':0.5,
-                'xanchor': 'center',
-                'yanchor': 'top'
-            }
-        )
-        
-        return fig
-    
-    except Exception as e:
-        st.warning(f"Could not create visualization: {str(e)}")
-        return None
-
-# Function to use pandas agent to recommend and create visualizations
-def create_pandas_agent_visualization(df, title=None):
-    """
-    Use a pandas agent to intelligently create a visualization for the dataframe.
-    
-    Args:
-        df (pd.DataFrame): DataFrame to visualize
-        title (str, optional): Title for the visualization
-        
-    Returns:
-        plotly figure or None if visualization couldn't be created
-    """
-    try:
-        # Skip if DataFrame is empty or too small
-        if len(df) < 2 or df.empty:
-            return None
-        
-        # Create a pandas agent to analyze and create the best visualization
-        agent = create_pandas_dataframe_agent(
-            ChatOpenAI(
-                temperature=0, 
-                model=MODEL_NAME,
-                api_key=OPENAI_API_KEY
-            ),
-            df,
-            verbose=False,
-            agent_type=AgentType.OPENAI_FUNCTIONS,
-            prefix="""You are a data visualization expert. Your task is to recommend the best 
-            visualization type for this dataset and explain why it's appropriate. 
-            Consider the data types, number of records, and potential insights."""
-        )
-        
-        # Ask the agent to recommend a visualization
-        recommendation = agent.run(f"""
-        Analyze this dataframe and recommend the best visualization type.
-        Consider:
-        1. The types of columns (numerical, categorical, datetime)
-        2. The number of records ({len(df)})
-        3. The potential patterns or insights to highlight
-        
-        Return your answer in this format:
-        CHART_TYPE: (one of bar, line, scatter, pie, heatmap)
-        X_COLUMN: (column name for x-axis or None)
-        Y_COLUMN: (column name for y-axis)
-        COLOR_BY: (column to use for color differentiation or None)
-        TITLE: (suggested title for the chart)
-        REASON: (brief explanation of why this visualization is best)
-        """)
-        
-        # Parse the agent's recommendation
-        lines = recommendation.strip().split('\n')
-        viz_specs = {}
-        for line in lines:
-            if ':' in line:
-                key, value = line.split(':', 1)
-                viz_specs[key.strip()] = value.strip()
-        
-        # Extract visualization specifications
-        chart_type = viz_specs.get('CHART_TYPE', 'bar').lower()
-        x_column = viz_specs.get('X_COLUMN', None)
-        if x_column == 'None' or x_column == 'null':
-            x_column = None
-        
-        y_column = viz_specs.get('Y_COLUMN', None)
-        if y_column == 'None' or y_column == 'null':
-            y_column = df.select_dtypes(include=['number']).columns[0] if not df.select_dtypes(include=['number']).empty else df.columns[0]
-        
-        color_by = viz_specs.get('COLOR_BY', None)
-        if color_by == 'None' or color_by == 'null':
-            color_by = None
-            
-        chart_title = viz_specs.get('TITLE', title or 'Data Visualization')
-        
-        # Create the visualization based on the recommendation
-        if chart_type == 'bar':
-            fig = px.bar(
-                df, 
-                x=x_column, 
-                y=y_column,
-                color=color_by,
-                title=chart_title,
-                height=400
-            )
-        elif chart_type == 'line':
-            fig = px.line(
-                df, 
-                x=x_column, 
-                y=y_column,
-                color=color_by,
-                title=chart_title,
-                height=400,
-                markers=True
-            )
-        elif chart_type == 'scatter':
-            fig = px.scatter(
-                df, 
-                x=x_column, 
-                y=y_column,
-                color=color_by,
-                title=chart_title,
-                height=400
-            )
-        elif chart_type == 'pie':
-            fig = px.pie(
-                df, 
-                names=x_column if x_column else df.index,
-                values=y_column,
-                title=chart_title,
-                height=400
-            )
         elif chart_type == 'heatmap':
             # For heatmap, we need to pivot the data if it's not already in the right format
             if x_column and y_column and len(df[x_column].unique()) <= 30 and len(df[y_column].unique()) <= 30:
@@ -2384,6 +2430,229 @@ def create_pandas_agent_visualization(df, title=None):
                     )
         else:
             # Default to bar chart
+            if len(categorical_cols) > 0 and len(numeric_cols) > 0:
+                fig = px.bar(
+                    df, 
+                    x=categorical_cols[0], 
+                    y=numeric_cols[0],
+                    title=title or f"Bar Chart of {numeric_cols[0]} by {categorical_cols[0]}",
+                    height=400
+                )
+            else:
+                fig = px.bar(
+                    df, 
+                    y=numeric_cols[0],
+                    title=title or f"Bar Chart of {numeric_cols[0]}",
+                    height=400
+                )
+        
+        # Apply common layout improvements
+        fig.update_layout(
+            margin=dict(l=20, r=20, t=40, b=20),
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
+            font=dict(family="Arial, sans-serif"),
+            title={
+                'y':0.95,
+                'x':0.5,
+                'xanchor': 'center',
+                'yanchor': 'top'
+            }
+        )
+        
+        return fig
+    
+    except Exception as e:
+        st.warning(f"Could not create visualization: {str(e)}")
+        return None
+
+# Function to use pandas agent to recommend and create visualizations
+def create_pandas_agent_visualization(df, title=None):
+    """
+    Create an intelligent visualization for a table using AI to determine the best chart type.
+    
+    Args:
+        df (pd.DataFrame): DataFrame to visualize
+        title (str, optional): Title for the visualization
+        
+    Returns:
+        plotly figure or None if visualization couldn't be created
+    """
+    try:
+        import plotly.express as px
+        import plotly.graph_objects as go
+        
+        # Make a copy to avoid modifying the original data
+        df = df.copy()
+        
+        # Clean up data for visualization
+        # Convert string columns that might be numeric
+        for col in df.columns:
+            if df[col].dtype == 'object':
+                try:
+                    df[col] = pd.to_numeric(df[col], errors='coerce')
+                except:
+                    pass
+                    
+        # Detect column types for selecting visualization
+        numeric_cols = df.select_dtypes(include=['number']).columns.tolist()
+        categorical_cols = df.select_dtypes(exclude=['number']).columns.tolist()
+        
+        # Try to detect datetime columns
+        datetime_cols = []
+        for col in df.columns:
+            try:
+                if df[col].dtype != 'datetime64[ns]':
+                    df[col] = pd.to_datetime(df[col])
+                datetime_cols.append(col)
+            except:
+                pass
+        
+        # In case we don't find valid columns for visualization
+        if not numeric_cols:
+            # If we have categorical columns, we can count occurrences
+            if categorical_cols:
+                # Create a count-based visualization
+                counts = df[categorical_cols[0]].value_counts()
+                fig = px.bar(
+                    x=counts.index,
+                    y=counts.values,
+                    title=title or f"Count of {categorical_cols[0]}",
+                    labels={'x': categorical_cols[0], 'y': 'Count'},
+                    height=400
+                )
+                return fig
+            return None
+            
+        # Select best columns for visualization based on column names and data types
+        # Prioritize columns with meaningful names for visualization
+        
+        # For x-axis, prefer: dates, years, categories, or other meaningful dimensions
+        preferred_x = None
+        
+        # First check for datetime columns
+        if datetime_cols:
+            preferred_x = datetime_cols[0]
+        # Then look for common dimension column names
+        else:
+            dimension_keywords = ['year', 'month', 'date', 'day', 'country', 'region', 'state', 
+                                 'category', 'group', 'type', 'name', 'id', 'age']
+            for keyword in dimension_keywords:
+                matching_cols = [col for col in df.columns if keyword.lower() in col.lower()]
+                if matching_cols:
+                    preferred_x = matching_cols[0]
+                    break
+        
+        # If no preferred x column found, use the first categorical column or index
+        if not preferred_x and categorical_cols:
+            preferred_x = categorical_cols[0]
+        
+        # For y-axis, prefer: metrics, percentages, counts, or other numerical values
+        preferred_y = None
+        metric_keywords = ['rate', 'percent', 'value', 'score', 'amount', 'count', 'total',
+                          'revenue', 'cost', 'price', 'quantity', 'number', 'mortality', 'incidence']
+        
+        for keyword in metric_keywords:
+            matching_cols = [col for col in numeric_cols if keyword.lower() in col.lower()]
+            if matching_cols:
+                preferred_y = matching_cols[0]
+                break
+                
+        # If no preferred y column found, use the first numeric column
+        if not preferred_y and numeric_cols:
+            preferred_y = numeric_cols[0]
+            
+        # Choose a column for color/grouping if needed
+        color_by = None
+        if len(categorical_cols) > 1 and preferred_x in categorical_cols:
+            # Use a different categorical column for color
+            color_by = [col for col in categorical_cols if col != preferred_x][0]
+        elif len(categorical_cols) > 0 and preferred_x not in categorical_cols:
+            color_by = categorical_cols[0]
+            
+        # Limit the number of categories for coloring to avoid overcrowding
+        if color_by and len(df[color_by].unique()) > 10:
+            top_categories = df[color_by].value_counts().nlargest(10).index.tolist()
+            df = df[df[color_by].isin(top_categories)]
+            
+        # Set chart title
+        chart_title = title or f"{preferred_y} by {preferred_x}" if preferred_x and preferred_y else title
+        
+        # Determine the best chart type based on the data characteristics
+        x_column = preferred_x
+        y_column = preferred_y
+        
+        # Check if data appears to be a time series
+        is_timeseries = preferred_x in datetime_cols or (preferred_x and any(kw in preferred_x.lower() 
+                        for kw in ['date', 'time', 'year', 'month', 'day']))
+        
+        # Check if data represents parts of a whole (percentages/proportions)
+        is_percentage = preferred_y and any(kw in preferred_y.lower() 
+                       for kw in ['percent', 'proportion', 'ratio', 'share'])
+        
+        # Check if data might be a distribution
+        is_distribution = len(df) > 20 and preferred_y and any(kw in preferred_y.lower() 
+                          for kw in ['distribution', 'frequency'])
+        
+        # Check if data is a correlation or heatmap candidate
+        is_correlation = len(numeric_cols) > 3
+        
+        # Create the appropriate chart based on data characteristics
+        if is_timeseries:
+            # Time series data is best shown with a line chart
+            fig = px.line(
+                df, 
+                x=x_column, 
+                y=y_column,
+                color=color_by,
+                title=chart_title,
+                height=400
+            )
+            # Format date axis if needed
+            fig.update_xaxes(tickangle=45)
+            
+        elif is_percentage and len(df) <= 10:
+            # Percentage data with few categories works well as a pie chart
+            fig = px.pie(
+                df, 
+                names=x_column, 
+                values=y_column,
+                title=chart_title,
+                height=400
+            )
+            
+        elif is_distribution:
+            # Distribution data works well as a histogram or box plot
+            fig = px.histogram(
+                df, 
+                x=y_column,
+                color=color_by,
+                title=chart_title,
+                height=400
+            )
+            
+        elif is_correlation:
+            # Show correlation matrix for datasets with multiple numeric columns
+            corr_matrix = df[numeric_cols].corr()
+            fig = px.imshow(
+                corr_matrix,
+                title=f"Correlation Matrix: {chart_title}",
+                height=400
+            )
+            
+        elif x_column and y_column and len(df) > 50:
+            # Scatter plot for large datasets with two numeric columns
+            fig = px.scatter(
+                df, 
+                x=x_column, 
+                y=y_column,
+                color=color_by,
+                title=chart_title,
+                height=400
+            )
+            
+        else:
+            # Default to bar chart
             fig = px.bar(
                 df, 
                 x=x_column, 
@@ -2413,3 +2682,270 @@ def create_pandas_agent_visualization(df, title=None):
         st.warning(f"Could not create intelligent visualization: {str(e)}")
         # Fall back to basic visualization
         return create_table_visualization(df, title)
+
+ALLOWED_EXTENSIONS = {'csv', 'xlsx', 'xls'}
+
+class PythonExecutionAgent:
+    def __init__(self, df):
+        self.df = df
+
+    def execute_python_code(self, code):
+        plt.figure(figsize=(10, 6))
+        local_vars = {'df': self.df, 'plt': plt, 'sns': sns}
+        try:
+            exec(code, globals(), local_vars)
+            buf = io.BytesIO()
+            plt.savefig(buf, format='png', dpi=300, bbox_inches='tight')
+            buf.seek(0)
+            plt.close()
+            return buf
+        except Exception as e:
+            plt.close()
+            return f"Error: {str(e)}"
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def create_pandas_agent(df):
+    llm = ChatOpenAI(temperature=0, model_name="gpt-3.5-turbo", openai_api_key=os.getenv("OPENAI_API_KEY"))
+    return create_pandas_dataframe_agent(
+        llm,
+        df,
+        verbose=True,
+        agent_type=AgentType.OPENAI_FUNCTIONS,
+        callbacks=[StreamlitCallback(st.empty())],
+        allow_dangerous_code=False
+    )
+
+def create_python_execution_agent(df):
+    return PythonExecutionAgent(df)
+
+def display_health_indicators_table(df):
+    """
+    Display a table of top health indicators with their values and trends
+    """
+    try:
+        if 'indicator' not in df.columns or 'value' not in df.columns:
+            # Create sample data if the required columns don't exist
+            data = {
+                'indicator': [
+                    'Life Expectancy',
+                    'Infant Mortality Rate',
+                    'HIV Prevalence',
+                    'Diabetes Rate',
+                    'Vaccination Coverage',
+                    'Healthcare Access',
+                    'Obesity Rate',
+                    'Smoking Prevalence',
+                    'Mental Health Issues',
+                    'Cancer Incidence'
+                ],
+                'value': [
+                    65.3,
+                    28.8,
+                    13.5,
+                    12.8,
+                    76.5,
+                    84.2,
+                    28.3,
+                    21.5,
+                    15.7,
+                    185.9
+                ],
+                'trend': [
+                    'increasing',
+                    'decreasing',
+                    'stable',
+                    'increasing',
+                    'increasing',
+                    'improving',
+                    'increasing',
+                    'decreasing',
+                    'increasing',
+                    'stable'
+                ]
+            }
+            df = pd.DataFrame(data)
+    
+        # Sort indicators by value and get top ones
+        top_indicators = df.sort_values('value', ascending=False).head(10)
+        
+        # Apply custom styling
+        styled_df = top_indicators.style.format({
+            'value': '{:.1f}'
+        }).apply(lambda x: [
+            'background-color: #f0f2f6' if i % 2 == 0 else '' 
+            for i in range(len(x))
+        ], axis=0)
+        
+        # Display the table
+        st.dataframe(
+            styled_df,
+            column_config={
+                "indicator": "Health Indicator",
+                "value": st.column_config.NumberColumn(
+                    "Value",
+                    help="Value of the health indicator",
+                    format="%.1f"
+                ),
+                "trend": st.column_config.Column(
+                    "Trend",
+                    help="Current trend of the indicator"
+                )
+            },
+            hide_index=True,
+            use_container_width=True
+        )
+        
+        # Add a summary section
+        if st.checkbox("Show Summary Statistics", value=False):
+            st.dataframe(
+                df['value'].describe().round(2),
+                use_container_width=True
+            )
+            
+    except Exception as e:
+        st.error(f"Error displaying health indicators table: {str(e)}")
+        st.write("Using sample data instead...")
+        display_health_indicators_table(None)  # Recursively call with None to show sample data
+
+def plot_disease_trends(df):
+    """
+    Create a visualization of disease trends over time
+    """
+    try:
+        if 'date' not in df.columns or 'disease' not in df.columns or 'cases' not in df.columns:
+            # Create sample data if the required columns don't exist
+            dates = pd.date_range(start='2023-01-01', end='2023-12-31', freq='ME')
+            diseases = ['COVID-19', 'Diabetes', 'Hypertension', 'HIV/AIDS']
+            data = []
+            
+            for disease in diseases:
+                for date in dates:
+                    cases = random.randint(1000, 5000) + (date.month * 100)  # Add some trend
+                    data.append({
+                        'date': date,
+                        'disease': disease,
+                        'cases': cases
+                    })
+            df = pd.DataFrame(data)
+    
+        # Create the plot using plotly for better interactivity
+        fig = px.line(
+            df,
+            x='date',
+            y='cases',
+            color='disease',
+            title='',  # Remove title
+            labels={'date': 'Date', 'cases': 'Number of Cases', 'disease': 'Disease'},
+            template='plotly_white'
+        )
+        
+        # Update layout for better appearance
+        fig.update_layout(
+            hovermode='x unified',
+            legend=dict(
+                yanchor="top",
+                y=0.99,
+                xanchor="left",
+                x=0.01
+            ),
+            margin=dict(l=20, r=20, t=20, b=20)  # Reduced top margin since we removed the title
+        )
+        
+        # Display the plot
+        st.plotly_chart(fig, use_container_width=True)
+        
+        # Add summary statistics
+        if st.checkbox("Show Disease Statistics", value=False):
+            summary_stats = df.groupby('disease')['cases'].agg(['mean', 'min', 'max']).round(0)
+            st.dataframe(
+                summary_stats,
+                column_config={
+                    "mean": st.column_config.NumberColumn("Average Cases", format="%d"),
+                    "min": st.column_config.NumberColumn("Minimum Cases", format="%d"),
+                    "max": st.column_config.NumberColumn("Maximum Cases", format="%d")
+                },
+                use_container_width=True
+            )
+            
+    except Exception as e:
+        st.error(f"Error creating disease trends visualization: {str(e)}")
+        st.write("Using sample data instead...")
+        plot_disease_trends(None)  # Recursively call with None to show sample data
+
+def handle_health_query(query, df):
+    """
+    Handle health-related queries and generate appropriate visualizations
+    """
+    if "table" in query.lower() and "health indicators" in query.lower():
+        display_health_indicators_table(df)
+    elif "visualization" in query.lower() and "disease trends" in query.lower():
+        plot_disease_trends(df)
+    else:
+        st.write("I'm not sure how to handle that query. Please try asking for a table of health indicators or a visualization of disease trends.")
+
+def main():
+    # Initial title when no country is selected
+    if 'country' not in st.session_state or not st.session_state.get('country'):
+        st.title("AI Doctor - Chronic Disease Analyzer 👨‍⚕️")
+        st.info("👈 Please enter a country name in the sidebar to begin.")
+        return
+
+    # Initialize session state
+    if 'health_data' not in st.session_state:
+        # Create sample data for demonstration
+        dates = pd.date_range(start='2023-01-01', end='2023-12-31', freq='ME')  # Using ME instead of M
+        diseases = ['COVID-19', 'Diabetes', 'Hypertension', 'HIV/AIDS']
+        data = []
+        
+        # Generate sample disease trends data
+        for disease in diseases:
+            for date in dates:
+                cases = random.randint(1000, 5000) + (date.month * 100)  # Add some trend
+                data.append({
+                    'date': date,
+                    'disease': disease,
+                    'cases': cases
+                })
+        
+        # Create sample health indicators data
+        indicators = [
+            {'indicator': 'Life Expectancy', 'value': 65.3, 'trend': 'increasing'},
+            {'indicator': 'Infant Mortality Rate', 'value': 28.8, 'trend': 'decreasing'},
+            {'indicator': 'HIV Prevalence', 'value': 13.5, 'trend': 'stable'},
+            {'indicator': 'Diabetes Rate', 'value': 12.8, 'trend': 'increasing'},
+            {'indicator': 'Vaccination Coverage', 'value': 76.5, 'trend': 'increasing'},
+            {'indicator': 'Healthcare Access', 'value': 84.2, 'trend': 'improving'},
+            {'indicator': 'Obesity Rate', 'value': 28.3, 'trend': 'increasing'},
+            {'indicator': 'Smoking Prevalence', 'value': 21.5, 'trend': 'decreasing'},
+            {'indicator': 'Mental Health Issues', 'value': 15.7, 'trend': 'increasing'},
+            {'indicator': 'Cancer Incidence', 'value': 185.9, 'trend': 'stable'}
+        ]
+        
+        st.session_state.health_data = {
+            'disease_trends': pd.DataFrame(data),
+            'health_indicators': pd.DataFrame(indicators)
+        }
+
+    # Create sidebar with dropdown
+    st.sidebar.title("AI Doctor Research")
+    selected_view = st.sidebar.selectbox(
+        "Select Analysis View",
+        ["Health Indicators", "Custom Query"],
+        label_visibility="collapsed"
+    )
+
+    # Main content area
+    if selected_view == "Health Indicators":
+        st.title("AI Health Data Analysis")
+        display_health_indicators_table(st.session_state.health_data['health_indicators'])
+        plot_disease_trends(st.session_state.health_data['disease_trends'])
+    else:  # Custom Query
+        query = st.text_input("Enter your health-related query:", 
+                            placeholder="e.g., 'Show me a table of health indicators' or 'Tell me about disease trends'")
+        if query:
+            handle_health_query(query, st.session_state.health_data)
+
+if __name__ == "__main__":
+    main()

@@ -1588,36 +1588,52 @@ class MedicalAnalysisAgent:
 # Agent 5: Healthcare Chat Agent
 class HealthcareChatAgent:
     def __init__(self, api_key):
-        self.api_key = api_key
-        self.llm = ChatOpenAI(temperature=0.2, model="gpt-4o-mini")
-        self.conversation_history = []
-        
-        # Initialize variables to store current dataframe and country
+        self.llm = ChatOpenAI(
+            temperature=0,
+            model="gpt-4",
+            api_key=api_key
+        )
         self.current_df = None
         self.current_country = None
-        
-        # Initialize tools with try-except for better error handling
+        self.initialize_tools()
+
+    def initialize_tools(self):
+        """Initialize the tools with proper function references."""
         try:
             self.tools = [
                 Tool(
                     name="format_data_as_table",
-                    func=format_table_tool,
+                    func=self.format_table_tool,
                     description="Format data as a professional table with analysis"
                 ),
                 Tool(
                     name="analyze_medical_data",
-                    func=analyze_medical_tool,
+                    func=self.analyze_medical_tool,
                     description="Analyze medical data and provide insights"
                 ),
                 Tool(
                     name="create_visualization",
-                    func=create_viz_tool,
+                    func=self.create_viz_tool,
                     description="Create data visualizations and charts"
                 )
             ]
         except Exception as e:
             st.warning(f"Error initializing tools: {str(e)}")
             self.tools = []
+
+    def format_table_tool(self, query):
+        """Tool function for formatting tables."""
+        return self.format_data_as_table(query=query)
+        
+    def analyze_medical_tool(self, query):
+        """Tool function for medical data analysis."""
+        df = st.session_state.get('data', None)
+        country = st.session_state.get('country', None)
+        return self.analyze_medical_data(query=query, df=df, country=country)
+        
+    def create_viz_tool(self, query):
+        """Tool function for creating visualizations."""
+        return self.create_visualization(query=query)
 
     def format_response(self, response):
         """Format the response to be more presentable."""
@@ -1634,27 +1650,9 @@ class HealthcareChatAgent:
             self.current_df = df
             self.current_country = country
             
-            # Create the agent with error handling
-            agent = initialize_agent(
-                self.tools,
-                self.llm,
-                agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
-                handle_parsing_errors=True,
-                verbose=True
-            )
-
-            # Add conversation context
-            context = f"""You are analyzing healthcare data for {country}. 
-            Provide direct, professional responses focused on data analysis and insights.
-            User query: {user_input}"""
-
-            # Get response from agent
-            response = agent.invoke({"input": context})
-            formatted_response = self.format_response(response)
-            
             # Check if the query is about chronic diseases generally
             if "chronic disease" in user_input.lower() or "chronic diseases" in user_input.lower():
-                return """
+                return f"""
                 Chronic diseases are health conditions that last a year or more and require ongoing medical attention, limit activities of daily living, or both. 
                 
                 Common chronic diseases include:
@@ -1675,51 +1673,7 @@ class HealthcareChatAgent:
                 In the healthcare data for {country}, we track various indicators related to these chronic conditions, including prevalence rates, mortality, risk factors, and healthcare utilization.
                 """
             
-            # Create the agent with error handling
             try:
-                # Make sure tools are available
-                if not hasattr(self, 'tools') or not self.tools:
-                    # Reinitialize tools if missing
-                    def format_table_tool(query):
-                        return self.format_data_as_table(query=query)
-                        
-                    def analyze_medical_tool(query):
-                        df = st.session_state.get('data', None)
-                        country = st.session_state.get('country', None)
-                        return self.analyze_medical_data(query=query, df=df, country=country)
-                        
-                    def create_viz_tool(query):
-                        return self.create_visualization(query=query)
-                    
-                    self.tools = [
-                        Tool(
-                            name="format_data_as_table",
-                            func=format_table_tool,
-                            description="Format data as a professional table with analysis"
-                        ),
-                        Tool(
-                            name="analyze_medical_data",
-                            func=analyze_medical_tool,
-                            description="Analyze medical data and provide insights"
-                        ),
-                        Tool(
-                            name="create_visualization",
-                            func=create_viz_tool,
-                            description="Create data visualizations and charts"
-                        )
-                    ]
-                
-                # Use a more structured agent type with better output formatting
-                agent = initialize_agent(
-                    self.tools,
-                    self.llm,
-                    agent=AgentType.STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION,
-                    handle_parsing_errors=True,
-                    verbose=True,
-                    max_iterations=5,
-                    max_execution_time=60
-                )
-
                 # Add detailed conversation context
                 data_summary = f"""
                 Dataset Information:
@@ -1767,10 +1721,22 @@ class HealthcareChatAgent:
                 
                 User question: {user_input}"""
 
+                # Use a more structured agent type with better output formatting
+                agent = initialize_agent(
+                    self.tools,
+                    self.llm,
+                    agent=AgentType.STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION,
+                    handle_parsing_errors=True,
+                    verbose=True,
+                    max_iterations=5,
+                    max_execution_time=60
+                )
+
                 # Get response from agent with timeout handling
                 response = agent.invoke({"input": context})
                 formatted_response = self.format_response(response)
                 return formatted_response
+
             except Exception as agent_error:
                 # If the agent fails, provide a direct response
                 if "action input" in str(agent_error).lower() or "iteration limit" in str(agent_error).lower():
@@ -2117,32 +2083,8 @@ if country:
             if 'chat_history' not in st.session_state:
                 st.session_state.chat_history = []
             
-            # Show example questions
-            example_questions = [
-                "What are the main chronic diseases shown in the data?",
-                f"How does {country} compare to other countries in terms of diabetes?",
-                "Show me a table of the top health indicators",
-                "Create a visualization of disease trends over time"
-            ]
-            
-            # Allow users to click on example questions
-            st.markdown("##### Example Questions:")
-            example_cols = st.columns(2)
-            for i, question in enumerate(example_questions):
-                if example_cols[i % 2].button(question, key=f"example_{i}"):
-                    # Instead of setting session state, use a form submit
-                    st.session_state.temp_question = question
-                    st.rerun()
-            
-            # Use the temp question if available, otherwise empty string
-            initial_input = ""
-            if 'temp_question' in st.session_state:
-                initial_input = st.session_state.temp_question
-                # Clear it for next time
-                del st.session_state.temp_question
-            
             # Chat input
-            user_input = st.text_input("Ask a question about the health data:", key="chat_input", value=initial_input)
+            user_input = st.text_input("Ask a question about the health data:", key="chat_input")
             
             if user_input:
                 with st.spinner("AI Doctor is analyzing your question..."):

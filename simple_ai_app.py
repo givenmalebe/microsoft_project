@@ -1379,207 +1379,30 @@ class MedicalAnalysisAgent:
         
         return results
 
-    def analyze_medical_data(self, df, country, prompt):
-        """Analyze medical data based on specific prompts."""
+    def analyze_medical_data(self, df=None, country=None, query=None):
+        """Analyze medical data and provide insights."""
         try:
-            # Add a tool to analyze tables professionally
-            def analyze_df_tables(query=None):
-                """Analyze tables in the dataframe and provide professional insights"""
-                try:
-                    # Filter to only get table data for this country
-                    country_df = df[df['country'] == country] if 'country' in df.columns else df
-                    
-                    # Look for tabular data
-                    table_data = country_df[country_df.get('is_table', False) == True]
-                    
-                    if table_data.empty:
-                        return "No tabular data found for analysis."
-                    
-                    all_analyses = []
-                    
-                    # Analyze each table
-                    for idx, row in table_data.iterrows():
-                        if not (row.get('table_headers') and row.get('table_rows')):
-                            continue
-                            
-                        try:
-                            # Create a DataFrame from the table data
-                            headers = row['table_headers']
-                            rows = row['table_rows']
-                            
-                            if not headers or not rows:
-                                continue
-                                
-                            # Convert rows to proper format
-                            table_df = pd.DataFrame(rows, columns=headers)
-                            
-                            # Different analysis based on the query or content
-                            analysis_type = "descriptive"  # default
-                            if query:
-                                if any(term in query.lower() for term in ["trend", "time", "change", "growth"]):
-                                    analysis_type = "trend"
-                                elif any(term in query.lower() for term in ["correlation", "relationship", "connect"]):
-                                    analysis_type = "correlation"
-                                elif any(term in query.lower() for term in ["pattern", "distribution", "category"]):
-                                    analysis_type = "pattern"
-                            
-                            # Perform analysis
-                            analysis = self.analyze_table_data(table_df, analysis_type)
-                            
-                            # Format the analysis as markdown
-                            analysis_text = f"## Analysis of {row.get('indicator', 'Table')}\n\n"
-                            
-                            if analysis["summary"]:
-                                analysis_text += f"**Summary:** {analysis['summary']}\n\n"
-                            
-                            if analysis["insights"]:
-                                analysis_text += "### Key Insights\n"
-                                for insight in analysis["insights"]:
-                                    analysis_text += f"- {insight}\n"
-                                analysis_text += "\n"
-                            
-                            for table_info in analysis["tables"]:
-                                if isinstance(table_info["data"], pd.DataFrame):
-                                    analysis_text += f"### {table_info['title']}\n"
-                                    analysis_text += f"```\n{format_table_professionally(table_info['data'])}\n```\n\n"
-                            
-                            all_analyses.append(analysis_text)
-                        except Exception as e:
-                            continue
-                    
-                    if all_analyses:
-                        return "\n".join(all_analyses)
-                    else:
-                        return "Tables were found but could not be properly analyzed."
-                        
-                except Exception as e:
-                    return f"Error analyzing tables: {str(e)}"
-            
-            # Create pandas agent with tools
-            pandas_kwargs = {
-                "prefix": f"""You are a professional healthcare data analyst specializing in chronic disease data for {country}.
-                Your task is to analyze the data and provide clear, professional insights.
-                When presenting results, use well-structured tables, clear statistics, and professional formatting.
+            # Check if required arguments are provided
+            if df is None or country is None:
+                return """
+                ⚠️ **Missing Required Data**
                 
-                For any tables you present:
-                1. Include descriptive headers
-                2. Format numbers consistently (e.g., 2 decimal places for percentages)
-                3. Sort data in a meaningful order (e.g., by value or alphabetically)
-                4. Include summary statistics when relevant
-                5. Explain the significance of the data shown
-                
-                ALWAYS provide a brief interpretation after presenting data tables or charts.
-                Highlight key trends, patterns, outliers, or noteworthy findings in the data.
-                """,
-                "agent_type": AgentType.OPENAI_FUNCTIONS,
-                "verbose": True
-            }
-            
-            agent = create_pandas_dataframe_agent(
-                self.llm,
-                df,
-                **pandas_kwargs
-            )
-            
-            # Format prompt with country name and add instructions for professional table formatting
-            enhanced_prompt = f"""
-            {prompt.format(country=country)}
-            
-            Important: When presenting tabular data, format it professionally as a data analyst would.
-            Follow these principles:
-            
-            1. Structure tables with clear headers and aligned columns
-            2. Include relevant summary statistics (mean, median, min, max) for numerical data
-            3. Format numbers consistently with appropriate decimal places
-            4. Add a brief interpretation below each table explaining key insights
-            5. Highlight notable trends, outliers, or patterns in the data
-            6. Use proper labeling for all data points
-            
-            For time series data, organize chronologically and identify trends.
-            For categorical data, sort by frequency or relevance unless another order is more informative.
-            
-            If there are tables in the data that need analysis, use the analyze_tables tool.
-            """
-            
-            # Add specialized tool for table analysis
-            tools = [
-                Tool(
-                    name="analyze_tables",
-                    func=analyze_df_tables,
-                    description="Analyze tables in the data and provide professional insights"
-                )
-            ]
-            
-            # Use LangChain agent to run the analysis
-            agent_with_tools = initialize_agent(
-                tools,
-                self.llm,
-                agent=AgentType.OPENAI_FUNCTIONS,
-                verbose=True
-            )
-            
-            # First, check if there are tables that need analysis
-            tables_exist = (df.get('is_table', pd.Series([False] * len(df))) == True).any()
-            
-            if tables_exist:
-                # Start with table analysis
-                table_analysis = analyze_df_tables()
-                
-                # Then run the main analysis incorporating the table insights
-                full_prompt = f"""
-                {enhanced_prompt}
-                
-                Here is the analysis of tables in the data:
-                
-                {table_analysis}
-                
-                Use this information in your analysis and refer to these insights where relevant.
+                Please provide both dataframe and country for analysis.
                 """
-                
-                result = agent.run(full_prompt)
-            else:
-                # Just run the regular analysis
-                result = agent.run(enhanced_prompt)
             
-            # Post-process to make tables look better
-            if "```" in result and ("|" in result or "," in result):
-                # Extract table data between markdown code blocks
-                import re
-                table_blocks = re.findall(r"```(?:csv|markdown)?\s*([\s\S]*?)```", result)
-                
-                for table_block in table_blocks:
-                    # Try to parse as CSV or markdown table
-                    try:
-                        if "|" in table_block:
-                            # Looks like a markdown table
-                            lines = [line.strip() for line in table_block.strip().split("\n")]
-                            headers = [h.strip() for h in lines[0].strip("|").split("|")]
-                            
-                            # Skip the separator line
-                            data = []
-                            for line in lines[2:]:
-                                if line.strip():
-                                    data.append([cell.strip() for cell in line.strip("|").split("|")])
-                            
-                            # Format table professionally
-                            formatted_table = format_table_professionally(data, headers)
-                            
-                            # Replace the original table with our professionally formatted one
-                            result = result.replace(f"```{table_block}```", f"```\n{formatted_table}\n```")
-                        
-                        elif "," in table_block:
-                            # Looks like CSV data
-                            from io import StringIO
-                            df_table = pd.read_csv(StringIO(table_block))
-                            formatted_table = format_table_professionally(df_table, add_analysis=True)
-                            result = result.replace(f"```{table_block}```", f"```\n{formatted_table}\n```")
-                    except:
-                        # If parsing fails, leave as is
-                        continue
+            analysis_agent = MedicalAnalysisAgent(self.api_key)
+            result = analysis_agent.analyze_medical_data(df, country, query)
+            return f"""
+            🔍 **Medical Data Analysis**
             
-            return result
+            {result}
+            """
         except Exception as e:
-            return f"Error during medical analysis: {str(e)}"
+            return f"""
+            ⚠️ **Analysis Error**
+            
+            Unable to analyze the data: {str(e)}
+            """
 
 # Agent 5: Healthcare Chat Agent
 class HealthcareChatAgent:
@@ -1674,9 +1497,17 @@ class HealthcareChatAgent:
             Unable to format the data table: {str(e)}
             """
 
-    def analyze_medical_data(self, query, df, country):
+    def analyze_medical_data(self, query=None, df=None, country=None):
         """Analyze medical data and provide insights."""
         try:
+            # Check if required arguments are provided
+            if df is None or country is None:
+                return """
+                ⚠️ **Missing Required Data**
+                
+                Please provide both dataframe and country for analysis.
+                """
+            
             analysis_agent = MedicalAnalysisAgent(self.api_key)
             result = analysis_agent.analyze_medical_data(df, country, query)
             return f"""

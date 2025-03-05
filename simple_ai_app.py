@@ -32,7 +32,7 @@ from urllib.parse import quote
 import random
 import time
 import altair as alt
-import plotly.express as px
+
 from io import BytesIO
 import base64
 import zipfile
@@ -1592,27 +1592,9 @@ class HealthcareChatAgent:
         self.llm = ChatOpenAI(temperature=0.2, model="gpt-4o-mini")
         self.conversation_history = []
         
-        # Define tool functions with better error handling
-        def format_table_tool(query):
-            try:
-                return self.format_data_as_table(query=query)
-            except Exception as e:
-                return f"Error formatting table: {str(e)}"
-            
-        def analyze_medical_tool(query):
-            try:
-                # Get current dataframe and country from session state
-                df = st.session_state.get('data', None)
-                country = st.session_state.get('country', None)
-                return self.analyze_medical_data(query=query, df=df, country=country)
-            except Exception as e:
-                return f"Error analyzing data: {str(e)}"
-            
-        def create_viz_tool(query):
-            try:
-                return self.create_visualization(query=query)
-            except Exception as e:
-                return f"Error creating visualization: {str(e)}"
+        # Initialize variables to store current dataframe and country
+        self.current_df = None
+        self.current_country = None
         
         # Initialize tools with try-except for better error handling
         try:
@@ -1648,13 +1630,27 @@ class HealthcareChatAgent:
     def medical_chat(self, user_input, df, country):
         """Handle chat interactions with improved error handling."""
         try:
-            # Verify data is available
-            if df is None or df.empty:
-                return "No data is available for analysis. Please upload or load data first."
-                
-            # Store current dataframe and country in session state for tool access
-            st.session_state.data = df
-            st.session_state.country = country
+            # Store current df and country for tools to access
+            self.current_df = df
+            self.current_country = country
+            
+            # Create the agent with error handling
+            agent = initialize_agent(
+                self.tools,
+                self.llm,
+                agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
+                handle_parsing_errors=True,
+                verbose=True
+            )
+
+            # Add conversation context
+            context = f"""You are analyzing healthcare data for {country}. 
+            Provide direct, professional responses focused on data analysis and insights.
+            User query: {user_input}"""
+
+            # Get response from agent
+            response = agent.invoke({"input": context})
+            formatted_response = self.format_response(response)
             
             # Check if the query is about chronic diseases generally
             if "chronic disease" in user_input.lower() or "chronic diseases" in user_input.lower():
@@ -1840,19 +1836,27 @@ class HealthcareChatAgent:
             
             Unable to format the data table: {str(e)}
             """
-            
-    def analyze_medical_data(self, query, df=None, country=None):
+
+    def analyze_medical_data(self, query=None, df=None, country=None):
         """Analyze medical data and provide insights."""
         try:
-            # Use session data if df is None
-            if df is None:
-                df = st.session_state.data
+            # Check if required arguments are provided
+            if df is None or country is None:
+                # Try to use instance variables if available
+                if hasattr(self, 'current_df') and hasattr(self, 'current_country'):
+                    df = self.current_df
+                    country = self.current_country
+                # Try to use session state data and country if available
+                elif hasattr(st.session_state, 'data') and 'data' in st.session_state and hasattr(st.session_state, 'country') and 'country' in st.session_state:
+                    df = st.session_state.data
+                    country = st.session_state.country
+                else:
+                    return """
+                    ⚠️ **Missing Required Data**
+                    
+                    Please provide both dataframe and country for analysis.
+                    """
             
-            # Use session country if country is None
-            if country is None:
-                # Try to get country from session state or use a generic fallback
-                country = st.session_state.get('country', 'the selected country')
-                
             analysis_agent = MedicalAnalysisAgent(self.api_key)
             result = analysis_agent.analyze_medical_data(df, country, query)
             return f"""
@@ -2682,270 +2686,3 @@ def create_pandas_agent_visualization(df, title=None):
         st.warning(f"Could not create intelligent visualization: {str(e)}")
         # Fall back to basic visualization
         return create_table_visualization(df, title)
-
-ALLOWED_EXTENSIONS = {'csv', 'xlsx', 'xls'}
-
-class PythonExecutionAgent:
-    def __init__(self, df):
-        self.df = df
-
-    def execute_python_code(self, code):
-        plt.figure(figsize=(10, 6))
-        local_vars = {'df': self.df, 'plt': plt, 'sns': sns}
-        try:
-            exec(code, globals(), local_vars)
-            buf = io.BytesIO()
-            plt.savefig(buf, format='png', dpi=300, bbox_inches='tight')
-            buf.seek(0)
-            plt.close()
-            return buf
-        except Exception as e:
-            plt.close()
-            return f"Error: {str(e)}"
-
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-def create_pandas_agent(df):
-    llm = ChatOpenAI(temperature=0, model_name="gpt-3.5-turbo", openai_api_key=os.getenv("OPENAI_API_KEY"))
-    return create_pandas_dataframe_agent(
-        llm,
-        df,
-        verbose=True,
-        agent_type=AgentType.OPENAI_FUNCTIONS,
-        callbacks=[StreamlitCallback(st.empty())],
-        allow_dangerous_code=False
-    )
-
-def create_python_execution_agent(df):
-    return PythonExecutionAgent(df)
-
-def display_health_indicators_table(df):
-    """
-    Display a table of top health indicators with their values and trends
-    """
-    try:
-        if 'indicator' not in df.columns or 'value' not in df.columns:
-            # Create sample data if the required columns don't exist
-            data = {
-                'indicator': [
-                    'Life Expectancy',
-                    'Infant Mortality Rate',
-                    'HIV Prevalence',
-                    'Diabetes Rate',
-                    'Vaccination Coverage',
-                    'Healthcare Access',
-                    'Obesity Rate',
-                    'Smoking Prevalence',
-                    'Mental Health Issues',
-                    'Cancer Incidence'
-                ],
-                'value': [
-                    65.3,
-                    28.8,
-                    13.5,
-                    12.8,
-                    76.5,
-                    84.2,
-                    28.3,
-                    21.5,
-                    15.7,
-                    185.9
-                ],
-                'trend': [
-                    'increasing',
-                    'decreasing',
-                    'stable',
-                    'increasing',
-                    'increasing',
-                    'improving',
-                    'increasing',
-                    'decreasing',
-                    'increasing',
-                    'stable'
-                ]
-            }
-            df = pd.DataFrame(data)
-    
-        # Sort indicators by value and get top ones
-        top_indicators = df.sort_values('value', ascending=False).head(10)
-        
-        # Apply custom styling
-        styled_df = top_indicators.style.format({
-            'value': '{:.1f}'
-        }).apply(lambda x: [
-            'background-color: #f0f2f6' if i % 2 == 0 else '' 
-            for i in range(len(x))
-        ], axis=0)
-        
-        # Display the table
-        st.dataframe(
-            styled_df,
-            column_config={
-                "indicator": "Health Indicator",
-                "value": st.column_config.NumberColumn(
-                    "Value",
-                    help="Value of the health indicator",
-                    format="%.1f"
-                ),
-                "trend": st.column_config.Column(
-                    "Trend",
-                    help="Current trend of the indicator"
-                )
-            },
-            hide_index=True,
-            use_container_width=True
-        )
-        
-        # Add a summary section
-        if st.checkbox("Show Summary Statistics", value=False):
-            st.dataframe(
-                df['value'].describe().round(2),
-                use_container_width=True
-            )
-            
-    except Exception as e:
-        st.error(f"Error displaying health indicators table: {str(e)}")
-        st.write("Using sample data instead...")
-        display_health_indicators_table(None)  # Recursively call with None to show sample data
-
-def plot_disease_trends(df):
-    """
-    Create a visualization of disease trends over time
-    """
-    try:
-        if 'date' not in df.columns or 'disease' not in df.columns or 'cases' not in df.columns:
-            # Create sample data if the required columns don't exist
-            dates = pd.date_range(start='2023-01-01', end='2023-12-31', freq='ME')
-            diseases = ['COVID-19', 'Diabetes', 'Hypertension', 'HIV/AIDS']
-            data = []
-            
-            for disease in diseases:
-                for date in dates:
-                    cases = random.randint(1000, 5000) + (date.month * 100)  # Add some trend
-                    data.append({
-                        'date': date,
-                        'disease': disease,
-                        'cases': cases
-                    })
-            df = pd.DataFrame(data)
-    
-        # Create the plot using plotly for better interactivity
-        fig = px.line(
-            df,
-            x='date',
-            y='cases',
-            color='disease',
-            title='',  # Remove title
-            labels={'date': 'Date', 'cases': 'Number of Cases', 'disease': 'Disease'},
-            template='plotly_white'
-        )
-        
-        # Update layout for better appearance
-        fig.update_layout(
-            hovermode='x unified',
-            legend=dict(
-                yanchor="top",
-                y=0.99,
-                xanchor="left",
-                x=0.01
-            ),
-            margin=dict(l=20, r=20, t=20, b=20)  # Reduced top margin since we removed the title
-        )
-        
-        # Display the plot
-        st.plotly_chart(fig, use_container_width=True)
-        
-        # Add summary statistics
-        if st.checkbox("Show Disease Statistics", value=False):
-            summary_stats = df.groupby('disease')['cases'].agg(['mean', 'min', 'max']).round(0)
-            st.dataframe(
-                summary_stats,
-                column_config={
-                    "mean": st.column_config.NumberColumn("Average Cases", format="%d"),
-                    "min": st.column_config.NumberColumn("Minimum Cases", format="%d"),
-                    "max": st.column_config.NumberColumn("Maximum Cases", format="%d")
-                },
-                use_container_width=True
-            )
-            
-    except Exception as e:
-        st.error(f"Error creating disease trends visualization: {str(e)}")
-        st.write("Using sample data instead...")
-        plot_disease_trends(None)  # Recursively call with None to show sample data
-
-def handle_health_query(query, df):
-    """
-    Handle health-related queries and generate appropriate visualizations
-    """
-    if "table" in query.lower() and "health indicators" in query.lower():
-        display_health_indicators_table(df)
-    elif "visualization" in query.lower() and "disease trends" in query.lower():
-        plot_disease_trends(df)
-    else:
-        st.write("I'm not sure how to handle that query. Please try asking for a table of health indicators or a visualization of disease trends.")
-
-def main():
-    # Initial title when no country is selected
-    if 'country' not in st.session_state or not st.session_state.get('country'):
-        st.title("AI Doctor - Chronic Disease Analyzer 👨‍⚕️")
-        st.info("👈 Please enter a country name in the sidebar to begin.")
-        return
-
-    # Initialize session state
-    if 'health_data' not in st.session_state:
-        # Create sample data for demonstration
-        dates = pd.date_range(start='2023-01-01', end='2023-12-31', freq='ME')  # Using ME instead of M
-        diseases = ['COVID-19', 'Diabetes', 'Hypertension', 'HIV/AIDS']
-        data = []
-        
-        # Generate sample disease trends data
-        for disease in diseases:
-            for date in dates:
-                cases = random.randint(1000, 5000) + (date.month * 100)  # Add some trend
-                data.append({
-                    'date': date,
-                    'disease': disease,
-                    'cases': cases
-                })
-        
-        # Create sample health indicators data
-        indicators = [
-            {'indicator': 'Life Expectancy', 'value': 65.3, 'trend': 'increasing'},
-            {'indicator': 'Infant Mortality Rate', 'value': 28.8, 'trend': 'decreasing'},
-            {'indicator': 'HIV Prevalence', 'value': 13.5, 'trend': 'stable'},
-            {'indicator': 'Diabetes Rate', 'value': 12.8, 'trend': 'increasing'},
-            {'indicator': 'Vaccination Coverage', 'value': 76.5, 'trend': 'increasing'},
-            {'indicator': 'Healthcare Access', 'value': 84.2, 'trend': 'improving'},
-            {'indicator': 'Obesity Rate', 'value': 28.3, 'trend': 'increasing'},
-            {'indicator': 'Smoking Prevalence', 'value': 21.5, 'trend': 'decreasing'},
-            {'indicator': 'Mental Health Issues', 'value': 15.7, 'trend': 'increasing'},
-            {'indicator': 'Cancer Incidence', 'value': 185.9, 'trend': 'stable'}
-        ]
-        
-        st.session_state.health_data = {
-            'disease_trends': pd.DataFrame(data),
-            'health_indicators': pd.DataFrame(indicators)
-        }
-
-    # Create sidebar with dropdown
-    st.sidebar.title("AI Doctor Research")
-    selected_view = st.sidebar.selectbox(
-        "Select Analysis View",
-        ["Health Indicators", "Custom Query"],
-        label_visibility="collapsed"
-    )
-
-    # Main content area
-    if selected_view == "Health Indicators":
-        st.title("AI Health Data Analysis")
-        display_health_indicators_table(st.session_state.health_data['health_indicators'])
-        plot_disease_trends(st.session_state.health_data['disease_trends'])
-    else:  # Custom Query
-        query = st.text_input("Enter your health-related query:", 
-                            placeholder="e.g., 'Show me a table of health indicators' or 'Tell me about disease trends'")
-        if query:
-            handle_health_query(query, st.session_state.health_data)
-
-if __name__ == "__main__":
-    main()

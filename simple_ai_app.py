@@ -10,7 +10,7 @@ from langchain.agents import AgentType, initialize_agent
 from langchain.tools import Tool
 from langchain.memory import ConversationBufferMemory
 from langchain_experimental.agents import create_pandas_dataframe_agent
-import matplotlib.pyplot as plt
+
 import io
 
 # Try to import non-essential libraries
@@ -58,7 +58,7 @@ except ImportError:
 from selenium.webdriver.chrome.options import Options
 from selenium import webdriver
 from io import StringIO
-import plotly.graph_objects as go
+
 
 # Load environment variables
 load_dotenv()
